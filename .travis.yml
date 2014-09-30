@@ -1,0 +1,7 @@
+language: objective-c
+compiler: clang
+before-script:
+script: 
+ - ./apothecary -t ios update tess2
+ - ./apothecary -t ios update freetype
+ - ./apothecary -t ios update openssl
