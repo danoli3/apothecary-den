@@ -5,8 +5,9 @@ Apothecary Formula Automated Testing (Travis has volunteered to drink our potion
 
 What is Apothecary? 
 ----------
-It is a Alchemy lab that mixes formulas and potions to build and update the C/C++ lib dependencies for https://github.com/openframeworks/openFrameworks
-See https://github.com/openframeworks/openFrameworks/tree/master/scripts/apothecary for more info.
+It is a Alchemy lab that mixes formulas and potions to build and update the C/C++ lib dependencies for [openframeworks/openFrameworks](https://github.com/openframeworks/openFrameworks)
+
+More info: [openFrameworks/scripts/apothecary](https://github.com/openframeworks/openFrameworks/tree/master/scripts/apothecary)
 
 
 # Build Status:
