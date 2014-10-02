@@ -1,7 +1,12 @@
 apothecary-den
 ==============
 
-Where the cool scripts hang out
+Apothecary Formula Automated Testing (Travis has volunteered to drink our potions!)
+
+What is Apothecary? 
+----------
+It is a Alchemy lab that mixes formulas and potions to build and update the C/C++ lib dependencies for https://github.com/openframeworks/openFrameworks
+See https://github.com/openframeworks/openFrameworks/tree/master/scripts/apothecary for more info.
 
 
 # Build Status:
