@@ -8,6 +8,7 @@ Where the cool scripts hang out
 
 ## iOS 
 (armv7, arm7s arm64, i386, x86_64) - std=libc++ / gnu++11 / c++11
+------------------
 
 ### Core
 
@@ -25,6 +26,7 @@ Where the cool scripts hang out
 
 #### FreeImage
 - [![Build Status](https://travis-ci.org/danoli3/apothecary-den.svg?branch=freeimage-ios)](https://github.com/danoli3/apothecary-den/tree/freeimage-ios)
+- 
 
 ### Addons
 
@@ -33,3 +35,6 @@ Where the cool scripts hang out
 
 #### Assimp
 - [![Build Status](https://travis-ci.org/danoli3/apothecary-den.svg?branch=assimp-ios)](https://github.com/danoli3/apothecary-den/tree/assimp-ios)
+
+
+----------------------------------
