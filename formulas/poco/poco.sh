@@ -187,7 +187,7 @@ function build() {
 		local BUILD_POCO_CONFIG_SIMULATOR=iPhoneSimulator-clang-libc++
 
 		# Locate the path of the openssl libs distributed with openFrameworks.
-		local OF_LIBS_OPENSSL="../../../../libs/openssl/"
+		local OF_LIBS_OPENSSL="$LIBS_DIR/openssl/"
 
 		# get the absolute path to the included openssl libs
 		local OF_LIBS_OPENSSL_ABS_PATH=$(cd $(dirname $OF_LIBS_OPENSSL); pwd)/$(basename $OF_LIBS_OPENSSL)
