@@ -53,11 +53,11 @@ function prepare() {
 		# fix using sed i636 reference and allow overloading variable
 		sed -i .tmp "s|POCO_TARGET_OSARCH.* = .*|POCO_TARGET_OSARCH ?= i386|" iPhoneSimulator-clang-libc++
 		sed -i .tmp "s|OSFLAGS            = -arch|OSFLAGS            ?= -arch|" iPhoneSimulator-clang-libc++
-		sed -i .tmp "s|STATICOPT_CC    =|STATICOPT_CC    ?= -DNDEBUG -Os -fPIC|" iPhone-clang-libc++
-		sed -i .tmp "s|STATICOPT_CXX   =|STATICOPT_CXX   ?= -DNDEBUG -Os -fPIC|" iPhone-clang-libc++
+		sed -i .tmp "s|STATICOPT_CC    =|STATICOPT_CC    ?= -DNDEBUG -DPOCO_ENABLE_CPP11 -Os -fPIC|" iPhone-clang-libc++
+		sed -i .tmp "s|STATICOPT_CXX   =|STATICOPT_CXX   ?= -DNDEBUG -DPOCO_ENABLE_CPP11 -Os -fPIC|" iPhone-clang-libc++
 		sed -i .tmp "s|OSFLAGS                 = -arch|OSFLAGS                ?= -arch|" iPhone-clang-libc++
-		sed -i .tmp "s|RELEASEOPT_CC   = -DNDEBUG -O2|RELEASEOPT_CC   =  -DNDEBUG -Os -fPIC|" iPhone-clang-libc++
-		sed -i .tmp "s|RELEASEOPT_CXX  = -DNDEBUG -O |RELEASEOPT_CXX  =  -DNDEBUG -Os -fPIC|" iPhone-clang-libc++
+		sed -i .tmp "s|RELEASEOPT_CC   = -DNDEBUG -O2|RELEASEOPT_CC   =  -DPOCO_ENABLE_CPP11 -DNDEBUG -Os -fPIC|" iPhone-clang-libc++
+		sed -i .tmp "s|RELEASEOPT_CXX  = -DNDEBUG -O |RELEASEOPT_CXX  =  -DPOCO_ENABLE_CPP11 -DNDEBUG -Os -fPIC|" iPhone-clang-libc++
 
 		cd ../rules/
 		cp compile compile.orig
@@ -229,7 +229,6 @@ function build() {
 			export CROSS_TOP="${DEVELOPER}/Platforms/${PLATFORM}.platform/Developer"
 			export CROSS_SDK="${PLATFORM}${SDKVERSION}.sdk"
 			export BUILD_TOOLS="${DEVELOPER}"
-			export POCO_ENABLE_CPP11=1
 
 			mkdir -p "$CURRENTPATH/build/$TYPE/$IOS_ARCH"
 			LOG="$CURRENTPATH/build/$TYPE/$IOS_ARCH/poco-$IOS_ARCH-${VER}.log"
@@ -237,9 +236,9 @@ function build() {
 			
 			if [[ "${IOS_ARCH}" == "i386" || "${IOS_ARCH}" == "x86_64" ]];
 			then
-				export OSFLAGS="-arch $POCO_TARGET_OSARCH -fPIC -isysroot ${CROSS_TOP}/SDKs/${CROSS_SDK} $MIN_TYPE$IPHONE_SDK_VERSION_MIN"
+				export OSFLAGS="-arch $POCO_TARGET_OSARCH -fPIC -DPOCO_ENABLE_CPP11 -isysroot ${CROSS_TOP}/SDKs/${CROSS_SDK} $MIN_TYPE$IPHONE_SDK_VERSION_MIN"
 			else 
-				export OSFLAGS="-arch $POCO_TARGET_OSARCH -fPIC -isysroot ${CROSS_TOP}/SDKs/${CROSS_SDK} $MIN_TYPE$IPHONE_SDK_VERSION_MIN"
+				export OSFLAGS="-arch $POCO_TARGET_OSARCH -fPIC -DPOCO_ENABLE_CPP11 -isysroot ${CROSS_TOP}/SDKs/${CROSS_SDK} $MIN_TYPE$IPHONE_SDK_VERSION_MIN"
 			fi
 			echo "--------------------"
 			echo "Making Poco-${VER} for ${PLATFORM} ${SDKVERSION} ${IOS_ARCH} : iOS Minimum=$MIN_IOS_VERSION"
