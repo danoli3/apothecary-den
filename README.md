@@ -6,7 +6,7 @@ Where the cool scripts hang out
 
 # Build Status:
 
-## iOS
+## iOS (armv7, arm7s arm64, i386, x86_64) - std=libc++ / gnu++11 / c++11
 
 ### Core
 
