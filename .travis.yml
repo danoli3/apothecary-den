@@ -1,0 +1,6 @@
+language: objective-c
+compiler: clang
+before-script:
+ - ./apothecary -t ios download openssl
+script:
+ - ./apothecary -t ios update openssl
