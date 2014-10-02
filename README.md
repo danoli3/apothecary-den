@@ -27,7 +27,7 @@ Where the cool scripts hang out
 
 #### FreeImage
 - [![Build Status](https://travis-ci.org/danoli3/apothecary-den.svg?branch=freeimage-ios)](https://github.com/danoli3/apothecary-den/tree/freeimage-ios)
-- 
+
 
 ### Addons
 
