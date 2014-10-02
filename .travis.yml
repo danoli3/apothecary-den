@@ -1,0 +1,6 @@
+language: objective-c
+compiler: clang
+before-script:
+ - ./apothecary -t ios download freeimage
+script:
+ - ./apothecary -t ios update freeimage
