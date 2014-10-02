@@ -246,7 +246,7 @@ function copy() {
 	cp -v Include/* $1/include
 
 	# source
-	mkdir -p $1/Source
+	mkdir -p $1/Sources
 	cp -v Source/* $1/Sources
 
 	# lib
