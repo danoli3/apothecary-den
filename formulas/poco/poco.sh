@@ -8,7 +8,7 @@
 # specify specfic build configs in poco/config using ./configure --config=NAME
 
 # define the version
-VER=pcre_8_35
+VER=pcre_update_2014-test
 
 # tools for git use
 GIT_URL=https://github.com/danoli3/poco
@@ -56,13 +56,13 @@ function prepare() {
 		sed -i .tmp "s|STATICOPT_CC    =|STATICOPT_CC    ?= -DNDEBUG -DPOCO_ENABLE_CPP11 -Os -fPIC|" iPhone-clang-libc++
 		sed -i .tmp "s|STATICOPT_CXX   =|STATICOPT_CXX   ?= -DNDEBUG -DPOCO_ENABLE_CPP11 -Os -fPIC|" iPhone-clang-libc++
 		sed -i .tmp "s|OSFLAGS                 = -arch|OSFLAGS                ?= -arch|" iPhone-clang-libc++
-		sed -i .tmp "s|RELEASEOPT_CC   = -DNDEBUG -O2|RELEASEOPT_CC   =  -DPOCO_ENABLE_CPP11 -DNDEBUG -Os -fPIC|" iPhone-clang-libc++
-		sed -i .tmp "s|RELEASEOPT_CXX  = -DNDEBUG -O |RELEASEOPT_CXX  =  -DPOCO_ENABLE_CPP11 -DNDEBUG -Os -fPIC|" iPhone-clang-libc++
+		sed -i .tmp "s|RELEASEOPT_CC   = -DNDEBUG -O2|RELEASEOPT_CC   = -DPOCO_ENABLE_CPP11 -DNDEBUG -Os -fPIC|" iPhone-clang-libc++
+		sed -i .tmp "s|RELEASEOPT_CXX  = -DNDEBUG -O |RELEASEOPT_CXX  = -DPOCO_ENABLE_CPP11 -DNDEBUG -Os -fPIC|" iPhone-clang-libc++
 
 		cd ../rules/
 		cp compile compile.orig
 		# Fix for making debug and release, making just release
-		sed -i .tmp "s|all_static: static_debug static_release|all_static: static_release|" compile
+        sed -i .tmp "s|all_static: static_debug static_release|all_static: static_release|" compile
 		cd ../../
 
 	elif [ "$TYPE" == "vs" ] ; then
