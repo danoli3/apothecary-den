@@ -1,8 +1,6 @@
 language: objective-c
 compiler: clang
 before-script:
- - ./apothecary -t ios download openssl
  - ./apothecary -t ios download poco
 script:
- - ./apothecary -t ios update openssl
  - ./apothecary -t ios update poco

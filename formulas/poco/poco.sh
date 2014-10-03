@@ -8,10 +8,10 @@
 # specify specfic build configs in poco/config using ./configure --config=NAME
 
 # define the version
-VER=apothecary-1.4
+VER=pcre_8_35
 
 # tools for git use
-GIT_URL=https://github.com/bakercp/poco
+GIT_URL=https://github.com/danoli3/poco
 GIT_TAG=poco-$VER
 
 # For Poco Builds, we omit both Data/MySQL and Data/ODBC because they require
@@ -22,14 +22,14 @@ SHA=
 
 # download the source code and unpack it into LIB_NAME
 function download() {
-	if [ "$SHA" == "" ] ; then
-		echo "SHA=="" $GIT_URL"
-		curl -Lk $GIT_URL/archive/$GIT_TAG.tar.gz -o poco-$GIT_TAG.tar.gz
-		tar -xf poco-$GIT_TAG.tar.gz
-		mv poco-$GIT_TAG poco
-		rm poco*.tar.gz
-	else
-		echo $GIT_URL
+#if [ "$SHA" == "" ] ; then
+#		echo "SHA=="" $GIT_URL"
+#		curl -Lk $GIT_URL/archive/$GIT_TAG.tar.gz -o poco-$GIT_TAG.tar.gz
+#		tar -xf poco-$GIT_TAG.tar.gz
+#		mv poco-$GIT_TAG poco
+#		rm poco*.tar.gz
+#	else
+#		echo $GIT_URL
 		git clone $GIT_URL -b poco-$VER
 	fi
 }
