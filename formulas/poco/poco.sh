@@ -29,9 +29,9 @@ function download() {
 #		mv poco-$GIT_TAG poco
 #		rm poco*.tar.gz
 #	else
-#		echo $GIT_URL
+		echo $GIT_URL
 		git clone $GIT_URL -b poco-$VER
-	fi
+#	fi
 }
 
 # prepare the build environment, executed inside the lib src dir
