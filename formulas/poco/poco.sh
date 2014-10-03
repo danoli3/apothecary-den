@@ -30,7 +30,7 @@ function download() {
 #		rm poco*.tar.gz
 #	else
 		echo $GIT_URL
-		git clone $GIT_URL -b poco-$VER
+		git clone $GIT_URL -b $VER
 #	fi
 }
 
