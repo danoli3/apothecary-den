@@ -8,7 +8,7 @@
 # specify specfic build configs in poco/config using ./configure --config=NAME
 
 # define the version
-VER=pcre_update_2014-test
+VER=poco-ofx-9
 
 # tools for git use
 GIT_URL=https://github.com/danoli3/poco
