@@ -8,10 +8,10 @@
 # specify specfic build configs in poco/config using ./configure --config=NAME
 
 # define the version
-VER=poco-ofx-9
+VER=apothecary-1.5
 
 # tools for git use
-GIT_URL=https://github.com/danoli3/poco
+GIT_URL=https://github.com/bakercp/poco
 GIT_TAG=poco-$VER
 
 # For Poco Builds, we omit both Data/MySQL and Data/ODBC because they require
@@ -22,16 +22,16 @@ SHA=
 
 # download the source code and unpack it into LIB_NAME
 function download() {
-#if [ "$SHA" == "" ] ; then
-#		echo "SHA=="" $GIT_URL"
-#		curl -Lk $GIT_URL/archive/$GIT_TAG.tar.gz -o poco-$GIT_TAG.tar.gz
-#		tar -xf poco-$GIT_TAG.tar.gz
-#		mv poco-$GIT_TAG poco
-#		rm poco*.tar.gz
-#	else
+	if [ "$SHA" == "" ] ; then
+		echo "SHA=="" $GIT_URL"
+		curl -Lk $GIT_URL/archive/$GIT_TAG.tar.gz -o poco-$GIT_TAG.tar.gz
+		tar -xf poco-$GIT_TAG.tar.gz
+		mv poco-$GIT_TAG poco
+		rm poco*.tar.gz
+	else
 		echo $GIT_URL
-		git clone $GIT_URL -b $VER
-#	fi
+		git clone $GIT_URL -b poco-$VER
+	fi
 }
 
 # prepare the build environment, executed inside the lib src dir
@@ -53,26 +53,26 @@ function prepare() {
 		# fix using sed i636 reference and allow overloading variable
 		sed -i .tmp "s|POCO_TARGET_OSARCH.* = .*|POCO_TARGET_OSARCH ?= i386|" iPhoneSimulator-clang-libc++
 		sed -i .tmp "s|OSFLAGS            = -arch|OSFLAGS            ?= -arch|" iPhoneSimulator-clang-libc++
-		sed -i .tmp "s|STATICOPT_CC    =|STATICOPT_CC    ?= -DNDEBUG -DPOCO_ENABLE_CPP11 -Os -fPIC|" iPhone-clang-libc++
-		sed -i .tmp "s|STATICOPT_CXX   =|STATICOPT_CXX   ?= -DNDEBUG -DPOCO_ENABLE_CPP11 -Os -fPIC|" iPhone-clang-libc++
+		sed -i .tmp "s|STATICOPT_CC    =|STATICOPT_CC    ?= -DNDEBUG -DPOCO_ENABLE_CPP11 -DHPDF_NOPNGLIB -Os -fPIC|" iPhone-clang-libc++
+		sed -i .tmp "s|STATICOPT_CXX   =|STATICOPT_CXX   ?= -DNDEBUG -DPOCO_ENABLE_CPP11 -DHPDF_NOPNGLIB -Os -fPIC|" iPhone-clang-libc++
 		sed -i .tmp "s|OSFLAGS                 = -arch|OSFLAGS                ?= -arch|" iPhone-clang-libc++
-		sed -i .tmp "s|RELEASEOPT_CC   = -DNDEBUG -O2|RELEASEOPT_CC   = -DPOCO_ENABLE_CPP11 -DNDEBUG -Os -fPIC|" iPhone-clang-libc++
-		sed -i .tmp "s|RELEASEOPT_CXX  = -DNDEBUG -O |RELEASEOPT_CXX  = -DPOCO_ENABLE_CPP11 -DNDEBUG -Os -fPIC|" iPhone-clang-libc++
+		sed -i .tmp "s|RELEASEOPT_CC   = -DNDEBUG -O2|RELEASEOPT_CC   =  -DNDEBUG -DPOCO_ENABLE_CPP11 -DHPDF_NOPNGLIB -Os -fPIC|" iPhone-clang-libc++
+		sed -i .tmp "s|RELEASEOPT_CXX  = -DNDEBUG -O |RELEASEOPT_CXX  =  -DNDEBUG -DPOCO_ENABLE_CPP11 -DHPDF_NOPNGLIB -Os -fPIC|" iPhone-clang-libc++
 
 		cd ../rules/
 		cp compile compile.orig
 		# Fix for making debug and release, making just release
-        sed -i .tmp "s|all_static: static_debug static_release|all_static: static_release|" compile
+		sed -i .tmp "s|all_static: static_debug static_release|all_static: static_release|" compile
 		cd ../../
 
 	elif [ "$TYPE" == "vs" ] ; then
-		# Patch the components to exclude those that we aren't using.  
+		# Patch the components to exclude those that we aren't using.
 		if patch -p0 -u -N --dry-run --silent < $FORMULA_DIR/components.patch 2>/dev/null ; then
 			patch -p0 -u < $FORMULA_DIR/components.patch
 		fi
 
 		# Locate the path of the openssl libs distributed with openFrameworks.
-		local OF_LIBS_OPENSSL="../../../../libs/openssl/"
+		local OF_LIBS_OPENSSL="$LIBS_DIR/openssl/"
 
 		# get the absolute path to the included openssl libs
 		local OF_LIBS_OPENSSL_ABS_PATH=$(cd $(dirname $OF_LIBS_OPENSSL); pwd)/$(basename $OF_LIBS_OPENSSL)
@@ -98,15 +98,15 @@ function prepare() {
 function build() {
 
 	if [ "$TYPE" == "osx" ] ; then
-		local BUILD_OPTS="--no-tests --no-samples --static --omit=CppUnit,CppUnit/WinTestRunner,Data/MySQL,Data/ODBC,PageCompiler,PageCompiler/File2Page,CppParser,PocoDoc,ProGen"
-		
+		local BUILD_OPTS="--no-tests --no-samples --static -DHPDF_NOPNGLIB --omit=CppUnit,CppUnit/WinTestRunner,Data/MySQL,Data/ODBC,PageCompiler,PageCompiler/File2Page,CppParser,PocoDoc,ProGen"
+
 		# 32 bit
 		# For OS 10.9+ we must explicitly set libstdc++ for the 32-bit OSX build.
 		./configure $BUILD_OPTS --cflags=-stdlib=libstdc++ --config=Darwin32
 		make
 
 		# 64 bit
-		./configure $BUILD_OPTS --config=Darwin64-clang-libc++
+		./configure $BUILD_OPTS -DPOCO_ENABLE_CPP11 --config=Darwin64-clang-libc++
 		make
 
 		cd lib/Darwin
@@ -131,7 +131,7 @@ function build() {
 		local BUILD_OPTS="--no-tests --no-samples --static --omit=CppUnit,CppUnit/WinTestRunner,Data/MySQL,Data/ODBC,PageCompiler,PageCompiler/File2Page,CppParser,PocoDoc,ProGen"
 
 		# Locate the path of the openssl libs distributed with openFrameworks.
-		local OF_LIBS_OPENSSL="../../../../libs/openssl/"
+		local OF_LIBS_OPENSSL="$LIBS_DIR/openssl/"
 
 		# get the absolute path to the included openssl libs
 		local OF_LIBS_OPENSSL_ABS_PATH=$(cd $(dirname $OF_LIBS_OPENSSL); pwd)/$(basename $OF_LIBS_OPENSSL)
@@ -152,10 +152,10 @@ function build() {
 	elif [ "$TYPE" == "ios" ] ; then
 
 
-		SDKVERSION=`xcrun -sdk iphoneos --show-sdk-version`	
+		SDKVERSION=`xcrun -sdk iphoneos --show-sdk-version`
 		set -e
 		CURRENTPATH=`pwd`
-		
+
 		DEVELOPER=$XCODE_DEV_ROOT
 		TOOLCHAIN=${DEVELOPER}/Toolchains/XcodeDefault.xctoolchain
 		VERSION=$VER
@@ -165,18 +165,18 @@ function build() {
 		echo $CURRENTPATH
 
 		# Validate environment
-		case $XCODE_DEV_ROOT in  
+		case $XCODE_DEV_ROOT in
 		     *\ * )
 		           echo "Your Xcode path contains whitespaces, which is not supported."
 		           exit 1
 		          ;;
 		esac
-		case $CURRENTPATH in  
+		case $CURRENTPATH in
 		     *\ * )
 		           echo "Your path contains whitespaces, which is not supported by 'make install'."
 		           exit 1
 		          ;;
-		esac 
+		esac
 
 		echo "------------"
 		# To Fix: global:62: *** Current working directory not under $PROJECT_BASE.  Stop. make
@@ -196,23 +196,24 @@ function build() {
 		local OPENSSL_LIBS=$OF_LIBS_OPENSSL_ABS_PATH/lib/ios
 
 		local BUILD_OPTS="--no-tests --no-samples --static --omit=CppUnit,CppUnit/WinTestRunner,Data/MySQL,Data/ODBC,PageCompiler,PageCompiler/File2Page,CppParser,PocoDoc,ProGen --include-path=$OPENSSL_INCLUDE --library-path=$OPENSSL_LIBS"
-		
+
 		STATICOPT_CC=-fPIC
 		STATICOPT_CXX=-fPIC
+		export HPDF_NOPNGLIB=1
 
 		# loop through architectures! yay for loops!
 		for IOS_ARCH in ${IOS_ARCHS}
 		do
 			MIN_IOS_VERSION=$IOS_MIN_SDK_VER
 		    # min iOS version for arm64 is iOS 7
-			
+
 		    if [[ "${IOS_ARCH}" == "arm64" || "${IOS_ARCH}" == "x86_64" ]]; then
 		    	MIN_IOS_VERSION=7.0 # 7.0 as this is the minimum for these architectures
 		    elif [ "${IOS_ARCH}" == "i386" ]; then
 		    	MIN_IOS_VERSION=5.1 # 6.0 to prevent start linking errors
 		    fi
 		    export IPHONE_SDK_VERSION_MIN=$IOS_MIN_SDK_VER
-			
+
 			export POCO_TARGET_OSARCH=$IOS_ARCH
 
 			MIN_TYPE=-miphoneos-version-min=
@@ -233,12 +234,12 @@ function build() {
 			mkdir -p "$CURRENTPATH/build/$TYPE/$IOS_ARCH"
 			LOG="$CURRENTPATH/build/$TYPE/$IOS_ARCH/poco-$IOS_ARCH-${VER}.log"
 			set +e
-			
+
 			if [[ "${IOS_ARCH}" == "i386" || "${IOS_ARCH}" == "x86_64" ]];
 			then
-				export OSFLAGS="-arch $POCO_TARGET_OSARCH -fPIC -DPOCO_ENABLE_CPP11 -isysroot ${CROSS_TOP}/SDKs/${CROSS_SDK} $MIN_TYPE$IPHONE_SDK_VERSION_MIN"
-			else 
-				export OSFLAGS="-arch $POCO_TARGET_OSARCH -fPIC -DPOCO_ENABLE_CPP11 -isysroot ${CROSS_TOP}/SDKs/${CROSS_SDK} $MIN_TYPE$IPHONE_SDK_VERSION_MIN"
+				export OSFLAGS="-arch $POCO_TARGET_OSARCH -fPIC -DPOCO_ENABLE_CPP11 -DHPDF_NOPNGLIB -isysroot ${CROSS_TOP}/SDKs/${CROSS_SDK} $MIN_TYPE$IPHONE_SDK_VERSION_MIN"
+			else
+				export OSFLAGS="-arch $POCO_TARGET_OSARCH -fPIC -DPOCO_ENABLE_CPP11 -DHPDF_NOPNGLIB -isysroot ${CROSS_TOP}/SDKs/${CROSS_SDK} $MIN_TYPE$IPHONE_SDK_VERSION_MIN"
 			fi
 			echo "--------------------"
 			echo "Making Poco-${VER} for ${PLATFORM} ${SDKVERSION} ${IOS_ARCH} : iOS Minimum=$MIN_IOS_VERSION"
@@ -246,10 +247,10 @@ function build() {
 			echo "Configuring for ${IOS_ARCH} ..."
 			./configure $BUILD_OPTS --config=$BUILD_POCO_CONFIG_IPHONE > "${LOG}" 2>&1
 
-			if [ $? != 0 ]; then 
+			if [ $? != 0 ]; then
 		    	echo "Problem while configure - Please check ${LOG}"
 		    	exit 1
-		    else 
+		    else
 		    	echo "Configure successful"
 		    fi
 		    echo "--------------------"
@@ -259,18 +260,20 @@ function build() {
 			echo "Please stand by..."
 			make >> "${LOG}" 2>&1
 			if [ $? != 0 ];
-		    then 
+		    then
 		    	echo "Problem while make - Please check ${LOG}"
 		    	exit 1
 		    else
 		    	echo "Make Successful for ${IOS_ARCH}"
 		    fi
-			unset POCO_TARGET_OSARCH IPHONE_SDK_VERSION_MIN OSFLAGS 
+			unset POCO_TARGET_OSARCH IPHONE_SDK_VERSION_MIN OSFLAGS
 			unset CROSS_TOP CROSS_SDK BUILD_TOOLS
 
 			echo "--------------------"
- 
+
 		done
+
+		unset HPDF_NOPNGLIB
 
 		cd lib/iPhoneOS
 		# link into universal lib, strip "lib" from filename
@@ -293,7 +296,7 @@ function build() {
 		for TOBESTRIPPED in $( ls -1) ; do
 			strip -x $TOBESTRIPPED >> "${SLOG}" 2>&1
 			if [ $? != 0 ];
-		    then 
+		    then
 		    	echo "Problem while stripping lib - Please check ${SLOG}"
 		    	exit 1
 		    else
@@ -303,7 +306,7 @@ function build() {
 
 
 		cd ../../
-				
+
 		echo "--------------------"
 		echo "Reseting changed files back to originals"
 		cd build/config
@@ -318,12 +321,12 @@ function build() {
 
 	elif [ "$TYPE" == "android" ] ; then
 		local BUILD_OPTS="--no-tests --no-samples --static --omit=CppUnit,CppUnit/WinTestRunner,Data/MySQL,Data/ODBC,PageCompiler,PageCompiler/File2Page,CppParser,PocoDoc,ProGen"
-		
+
 		local OLD_PATH=$PATH
 
 		export PATH=$PATH:$BUILD_DIR/Toolchains/Android/androideabi/bin:$BUILD_DIR/Toolchains/Android/x86/bin
 
-		local OF_LIBS_OPENSSL="../../../../libs/openssl/"
+		local OF_LIBS_OPENSSL="$LIBS_DIR/openssl/"
 
 		# get the absolute path to the included openssl libs
 		local OF_LIBS_OPENSSL_ABS_PATH=$(cd $(dirname $OF_LIBS_OPENSSL); pwd)/$(basename $OF_LIBS_OPENSSL)
@@ -386,7 +389,7 @@ function build() {
 		make
 		# delete debug builds
 		rm lib/Linux/armv7l/*d.a
-	else 
+	else
 		echoWarning "TODO: build $TYPE lib"
 	fi
 }
@@ -411,7 +414,7 @@ function copy() {
 	cp -Rv Zip/include/Poco/Zip $1/include/Poco
 
 	# libs
-	if [ "$TYPE" == "osx" ] ; then		
+	if [ "$TYPE" == "osx" ] ; then
 		mkdir -p $1/lib/$TYPE
 		cp -v lib/Darwin/*.a $1/lib/$TYPE
 	elif [ "$TYPE" == "ios" ] ; then
