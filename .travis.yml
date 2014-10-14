@@ -1,6 +1,6 @@
 language: objective-c
 compiler: clang
 before-script:
- - ./apothecary -t ios download freetype
+ - ./apothecary -t osx download freetype
 script:
- - ./apothecary -t ios update freetype
+ - ./apothecary -t osx update freetype
