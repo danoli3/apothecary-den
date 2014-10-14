@@ -13,8 +13,8 @@ FORMULA_TYPES=( "osx" "vs" "win_cb" "ios" "android" )
 VER=3160 # 3.16.0
 
 # tools for git use
-GIT_URL=
-GIT_TAG=
+GIT_URL=https://github.com/danoli3/FreeImage
+GIT_TAG=3.16.0
 
 # download the source code and unpack it into LIB_NAME
 function download() {
@@ -24,9 +24,7 @@ function download() {
 		unzip -qo FreeImage"$VER"Win32.zip
 		rm FreeImage"$VER"Win32.zip
 	elif [[ "${TYPE}" == "osx" || "${TYPE}" == "ios" ]]; then
-		GIT_URL=https://github.com/danoli3/FreeImage
         echo "Downloading from $GIT_URL for OSX/iOS"
-		GIT_TAG=3.16.0
 		echo $GIT_URL
 		curl -Lk $GIT_URL/archive/$GIT_TAG.tar.gz -o FreeImage-$GIT_TAG.tar.gz
 		tar -xf FreeImage-$GIT_TAG.tar.gz
