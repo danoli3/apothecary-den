@@ -23,6 +23,15 @@ function download() {
 		curl -LO http://downloads.sourceforge.net/freeimage/FreeImage"$VER"Win32.zip
 		unzip -qo FreeImage"$VER"Win32.zip
 		rm FreeImage"$VER"Win32.zip
+	elif [[ "$TYPE" == "osx" || "TYPE" == "ios" ]]; then
+		GIT_URL=https://github.com/danoli3/FreeImage
+		GIT_TAG=3.16.0
+		echo $GIT_URL
+		curl -Lk $GIT_URL/archive/$GIT_TAG.tar.gz -o .tar.gz
+		tar -xf $GIT_TAG.tar.gz
+		mv $GIT_TAG freeimage
+		rm *.tar.gz
+
 	else
 		curl -LO http://downloads.sourceforge.net/freeimage/FreeImage"$VER".zip
 		unzip -qo FreeImage"$VER".zip
@@ -96,12 +105,6 @@ function build() {
 
         mkdir -p "builddir/$TYPE"
 
-        #cp -v Makefile.srcs Makefile.srcs.orig
-        #mv -v Source/LibJXR/image/sys/image.c Source/LibJXR/image/sys/imagejxr.c
-
-        #sed -i tmp "s|Source/LibJXR/./image/sys/image.c|Source/LibJXR/./image/sys/imagejxr.c|" Makefile.srcs
-
-
         # loop through architectures! yay for loops!
         for IOS_ARCH in ${IOS_ARCHS}
         do
@@ -114,9 +117,8 @@ function build() {
 
 
             
-            local EXTRA_PLATFORM_CFLAGS="" # will add -fvisibility=hidden $(INCLUDE) to makefile
+            local EXTRA_PLATFORM_CFLAGS=""
 			export EXTRA_PLATFORM_LDFLAGS=""
-			#export ALL_IOS_ARCH="-arch armv7 -arch armv7s -arch arm64"
 			if [[ "${IOS_ARCH}" == "i386" || "${IOS_ARCH}" == "x86_64" ]];
 			then
 				PLATFORM="iPhoneSimulator"
@@ -143,8 +145,7 @@ function build() {
 		    	MIN_TYPE=-mios-simulator-version-min=
 		    fi
 
-			#export TARGET_NAME="build/$TYPE/$IOS_ARCH/libfreeimage.a"
-			export TARGET_NAME="libfreeimage-$IOS_ARCH.a"
+			export TARGET_NAME="$CURRENTPATH/libfreeimage-$IOS_ARCH.a"
 			export HEADER="Source/FreeImage.h"
 
 			export CC=$TOOLCHAIN/usr/bin/clang
@@ -159,35 +160,17 @@ function build() {
 			export RANLIB=$TOOLCHAIN/usr/bin/ranlib
 			export LIBTOOL=$TOOLCHAIN/usr/bin/libtool
 
-		    	# Manually Fix major issues with arm64 for iOS from some source libraries.
-		    #	cp -v Source/ZLib/gzguts.h Source/ZLib/gzguts.h.orig
-		    	#define LSEEK errors fixed by definig unistd for ZLib
-		   # 	sed -i temp '20i\
-					#include <unistd.h>' Source/ZLib/gzguts.h
 
-			#	cp -v Source/LibJXR/image/decode/segdec.c Source/LibJXR/image/decode/segdec.c.orig
-				
-		    	#sed -e 's/#if defined(_M_IA64) || defined(_ARM_)/#if defined(_M_IA64) || defined(_ARM_) || defined(__ARMEL__) || defined(_M_ARM) || defined(__arm__) || defined(__arm64__)/g' Source/LibJXR/image/decode/segdec.c > Source/LibJXR/image/decode/segdec.c
-
-		    	#cp -v Source/LibJXR/image/sys/xplatform_image.h Source/LibJXR/image/sys/xplatform_image.h.orig
-		    	#sed -e 's/#if defined(_ARM_) || defined(UNDER_CE)/#if defined(_ARM_) || defined(UNDER_CE) || defined(__ARMEL__) || defined(_M_ARM) || defined(__arm__) || defined(__arm64__)/g' Source/LibJXR/image/sys/xplatform_image.h> Source/LibJXR/image/decode/segdec.c
-
-		    #	cp -v Source/LibJXR/jxrgluelib/JXRGlueJxr.c Source/LibJXR/jxrgluelib/JXRGlueJxr.c.orig
-
-		    #	sed -i temp '31i\
-					#include <wchar.h>' Source/LibJXR/./jxrgluelib/JXRGlueJxr.c
-
-		   # fi
-		  	export EXTRA_PLATFORM_CFLAGS="$EXTRA_PLATFORM_CFLAGS" # will add -fvisibility=hidden $(INCLUDE) to makefile
+		  	export EXTRA_PLATFORM_CFLAGS="$EXTRA_PLATFORM_CFLAGS"
 			export EXTRA_PLATFORM_LDFLAGS="$EXTRA_PLATFORM_LDFLAGS -isysroot ${CROSS_TOP}/SDKs/${CROSS_SDK} -Wl,-dead_strip -I${CROSS_TOP}/SDKs/${CROSS_SDK}/usr/include/ $MIN_TYPE$MIN_IOS_VERSION "
-			
-		   	EXTRA_LINK_FLAGS="-stdlib=libc++ -Os -fPIC"
-			EXTRA_FLAGS="$EXTRA_LINK_FLAGS -pipe -fvisibility-inlines-hidden -Wno-ctor-dtor-privacy -Wc++11-narrowing -Wall -Wmissing-prototypes $EXTRA_PLATFORM_CFLAGS -ffast-math -fno-strict-aliasing -fmessage-length=0 -fexceptions -D__ANSI__ -DDISABLE_PERF_MEASUREMENT -fvisibility=hidden $MIN_TYPE$MIN_IOS_VERSION -isysroot ${CROSS_TOP}/SDKs/${CROSS_SDK} -I${CROSS_TOP}/SDKs/${CROSS_SDK}/usr/include/"
 
-		    export CC="$CC -std=c11 $EXTRA_LINK_FLAGS"
+		   	EXTRA_LINK_FLAGS="-arch $IOS_ARCH -fmessage-length=0 -fdiagnostics-show-note-include-stack -fmacro-backtrace-limit=0 -Wno-trigraphs -fpascal-strings -Os -Wno-missing-field-initializers -Wno-missing-prototypes -Wno-return-type -Wno-non-virtual-dtor -Wno-overloaded-virtual -Wno-exit-time-destructors -Wno-missing-braces -Wparentheses -Wswitch -Wno-unused-function -Wno-unused-label -Wno-unused-parameter -Wno-unused-variable -Wunused-value -Wno-empty-body -Wno-uninitialized -Wno-unknown-pragmas -Wno-shadow -Wno-four-char-constants -Wno-conversion -Wno-constant-conversion -Wno-int-conversion -Wno-bool-conversion -Wno-enum-conversion -Wno-shorten-64-to-32 -Wno-newline-eof -Wno-c++11-extensions -DHAVE_UNISTD_H=1 -DOPJ_STATIC -DNO_LCMS -D__ANSI__ -DDISABLE_PERF_MEASUREMENT -DLIBRAW_NODLL -DLIBRAW_LIBRARY_BUILD -DFREEIMAGE_LIB -fexceptions -fasm-blocks -fstrict-aliasing -Wdeprecated-declarations -Winvalid-offsetof -Wno-sign-conversion -Wmost -Wno-four-char-constants -Wno-unknown-pragmas -DNDEBUG -fPIC -fexceptions -fvisibility=hidden"
+			EXTRA_FLAGS="$EXTRA_LINK_FLAGS -ffast-math -DDISABLE_PERF_MEASUREMENT $MIN_TYPE$MIN_IOS_VERSION -isysroot ${CROSS_TOP}/SDKs/${CROSS_SDK} -I${CROSS_TOP}/SDKs/${CROSS_SDK}/usr/include/"
+
+		    export CC="$CC $EXTRA_FLAGS"
 			export CFLAGS="-arch $IOS_ARCH $EXTRA_FLAGS"
-			export CXXFLAGS="-fvisibility-inlines-hidden $EXTRA_FLAGS -std=c++11"
-			export LDFLAGS="-arch $IOS_ARCH $EXTRA_PLATFORM_LDFLAGS $EXTRA_LINK_FLAGS $MIN_TYPE$MIN_IOS_VERSION"
+			export CXXFLAGS="$EXTRA_FLAGS -std=c++11 -stdlib=libc++"
+			export LDFLAGS="-arch $IOS_ARCH $EXTRA_PLATFORM_LDFLAGS $EXTRA_LINK_FLAGS $MIN_TYPE$MIN_IOS_VERSION -std=c++11 -stdlib=libc++"
 			export LDFLAGS_PHONE=$LDFLAGS
 
 			mkdir -p "$CURRENTPATH/builddir/$TYPE/$IOS_ARCH"
@@ -209,46 +192,20 @@ function build() {
 		    else
 		    	echo "Make Successful for ${IOS_ARCH}"
 		    fi
-
-			echo "Running make clean"
-			echo "Please stand by..."
-			make clean >> "${LOG}" 2>&1
-
-			if [ $? != 0 ];
-		    then 
-		    	echo "Problem while make clean - Please check ${LOG}"
-		    	exit 1
-		    else
-		    	echo "Make clean Successful for ${IOS_ARCH}"
-		    fi
-      
-            unset ARCH IOS_DEVROOT IOS_SDKROOT IOS_CC TARGET_NAME HEADER
-            unset CC CPP CXX CXXCPP CFLAGS CXXFLAGS LDFLAGS LD AR AS NM RANLIB LIBTOOL 
-            unset EXTRA_PLATFORM_CFLAGS EXTRA_PLATFORM_LDFLAGS IOS_PLATFORM NO_LCMS
-
-            #if [ "$IOS_ARCH" == "arm64" ] ; then
 		    
-		    	# reset back to originals
-		    	#cp -v Source/ZLib/gzguts.h.orig Source/ZLib/gzguts.h
-				#cp -v Source/LibJXR/image/decode/segdec.c.orig Source/LibJXR/image/decode/segdec.c
-				#cp -v Source/LibJXR/image/sys/xplatform_image.h.orig Source/LibJXR/image/sys/xplatform_image.h
-				#cp -v Source/LibJXR/jxrgluelib/JXRGlueJxr.c.orig Source/LibJXR/jxrgluelib/JXRGlueJxr.c
-
-		    #fi
-     	
-
      		echo "Completed Build for $IOS_ARCH of FreeType"
 
      		mv -v libfreeimage-$IOS_ARCH.a Dist/$TYPE/libfreeimage-$IOS_ARCH.a
 
      		cp Source/FreeImage.h Dist
 
+            unset ARCH IOS_DEVROOT IOS_SDKROOT IOS_CC TARGET_NAME HEADER
+            unset CC CPP CXX CXXCPP CFLAGS CXXFLAGS LDFLAGS LD AR AS NM RANLIB LIBTOOL 
+            unset EXTRA_PLATFORM_CFLAGS EXTRA_PLATFORM_LDFLAGS IOS_PLATFORM NO_LCMS
+
 		done
 
 		echo "Completed Build for $TYPE"
-
-		#cp -v Makefile.srcs.orig Makefile.srcs
-        #mv -v Source/LibJXR/image/sys/imagejxr.c Source/LibJXR/image/sys/image.c
 
         echo "-----------------"
 		echo `pwd`
@@ -280,18 +237,15 @@ function build() {
 		lipo -info freeimage.a
 		echo "--------------------"
 		echo "Stripping any lingering symbols"
-
-		SLOG="$CURRENTPATH/lib/$TYPE/tess2-stripping.log"
-
-
+		echo "Please stand by..."
 		# validate all stripped debug:
-		strip -x freeimage.a  >> "${SLOG}" 2>&1
+		strip -x freeimage.a  >> "${LOG}" 2>&1
 		if [ $? != 0 ];
 		then 
-		    echo "Problem while stripping lib - Please check ${SLOG}"
+		    echo "Problem while stripping lib - Please check ${LOG}"
 		    exit 1
 		else
-		    echo "Strip Successful for ${SLOG}"
+		    echo "Strip Successful for ${LOG}"
 		fi
 		cd ../../
 
