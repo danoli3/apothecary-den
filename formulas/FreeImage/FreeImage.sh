@@ -23,14 +23,15 @@ function download() {
 		curl -LO http://downloads.sourceforge.net/freeimage/FreeImage"$VER"Win32.zip
 		unzip -qo FreeImage"$VER"Win32.zip
 		rm FreeImage"$VER"Win32.zip
-	elif [[ "$TYPE" == "osx" || "TYPE" == "ios" ]]; then
+	elif [[ "${TYPE}" == "osx" || "${TYPE}" == "ios" ]]; then
 		GIT_URL=https://github.com/danoli3/FreeImage
+        echo "Downloading from $GIT_URL for OSX/iOS"
 		GIT_TAG=3.16.0
 		echo $GIT_URL
-		curl -Lk $GIT_URL/archive/$GIT_TAG.tar.gz -o .tar.gz
-		tar -xf $GIT_TAG.tar.gz
-		mv $GIT_TAG FreeImage
-		rm *.tar.gz
+		curl -Lk $GIT_URL/archive/$GIT_TAG.tar.gz -o FreeImage-$GIT_TAG.tar.gz
+		tar -xf FreeImage-$GIT_TAG.tar.gz
+		mv FreeImage-$GIT_TAG FreeImage
+		rm FreeImage-$GIT_TAG.tar.gz
 
 	else
 		curl -LO http://downloads.sourceforge.net/freeimage/FreeImage"$VER".zip
