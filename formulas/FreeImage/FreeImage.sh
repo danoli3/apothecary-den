@@ -29,7 +29,7 @@ function download() {
 		echo $GIT_URL
 		curl -Lk $GIT_URL/archive/$GIT_TAG.tar.gz -o .tar.gz
 		tar -xf $GIT_TAG.tar.gz
-		mv $GIT_TAG freeimage
+		mv $GIT_TAG FreeImage
 		rm *.tar.gz
 
 	else
