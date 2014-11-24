@@ -3,7 +3,7 @@
 # openssl
 
 # define the version
-VER=1.0.1i
+VER=1.0.1j
 CSTANDARD=gnu11 # c89 | c99 | c11 | gnu11
 COMPILER_TYPE=clang # clang, gcc
 
@@ -47,13 +47,13 @@ function prepare() {
 		mkdir -p build/$TYPE/i386
 		mkdir -p build/$TYPE/x86_64
 		mkdir -p build/$TYPE/armv7
-		mkdir -p build/$TYPE/armv7s
+        #mkdir -p build/$TYPE/armv7s
 		mkdir -p build/$TYPE/arm64
 
 		mkdir -p lib/$TYPE/i386
 		mkdir -p lib/$TYPE/x86_64
 		mkdir -p lib/$TYPE/armv7
-		mkdir -p lib/$TYPE/armv7s
+        #mkdir -p lib/$TYPE/armv7s
 		mkdir -p lib/$TYPE/arm64
 
 		
@@ -140,8 +140,8 @@ function build() {
 
 
 
-		local IOS_ARCHS="i386 x86_64 armv7 armv7s arm64"
-		local STDLIB="libc++"	
+        local IOS_ARCHS="i386 x86_64 armv7 arm64" #armv7s
+		local STDLIB="libc++"
 
 
 		# Validate environment
@@ -171,10 +171,7 @@ function build() {
 				export THECOMPILER=${BUILD_TOOLS}/usr/bin/gcc
 			fi
 			echo "The compiler: $THECOMPILER"
-			
 
-			
-			#export ALL_IOS_ARCH="-arch armv7 -arch armv7s -arch arm64"
 			if [[ "${IOS_ARCH}" == "i386" || "${IOS_ARCH}" == "x86_64" ]];
 			then
 				PLATFORM="iPhoneSimulator"
@@ -265,7 +262,7 @@ function build() {
 			make clean >> "${LOG}" 2>&1
 
 			# copy libraries to lib folder
-			 cp "build/$TYPE/$IOS_ARCH/lib/libssl.a" "lib/$TYPE/$IOS_ARCH/libssl.a"
+			cp "build/$TYPE/$IOS_ARCH/lib/libssl.a" "lib/$TYPE/$IOS_ARCH/libssl.a"
 			cp "build/$TYPE/$IOS_ARCH/lib/libcrypto.a" "lib/$TYPE/$IOS_ARCH/libcrypto.a"
 
 			# must clean between builds
@@ -287,14 +284,12 @@ function build() {
 		# stripping the lib prefix to bypass any issues with existing sdk libraries
 		echo "Creating Fat Lib for crypto"
 		lipo -create armv7/libcrypto.a \
-					armv7s/libcrypto.a \
 					arm64/libcrypto.a \
 					i386/libcrypto.a \
 					x86_64/libcrypto.a \
 					-output crypto.a
 		echo "Creating Fat Lib for ssl"
 		lipo -create armv7/libssl.a \
-					armv7s/libssl.a \
 					arm64/libssl.a \
 					i386/libssl.a \
 					x86_64/libssl.a \
