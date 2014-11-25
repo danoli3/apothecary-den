@@ -13,8 +13,8 @@ FORMULA_TYPES=( "osx" "vs" "win_cb" "ios" "android" )
 VER=3160 # 3.16.0
 
 # tools for git use
-GIT_URL=
-GIT_TAG=
+GIT_URL=https://github.com/danoli3/FreeImage
+GIT_TAG=3.16.0
 
 # download the source code and unpack it into LIB_NAME
 function download() {
@@ -24,15 +24,13 @@ function download() {
 		unzip -qo FreeImage"$VER"Win32.zip
 		rm FreeImage"$VER"Win32.zip
 	elif [[ "${TYPE}" == "osx" || "${TYPE}" == "ios" ]]; then
-		GIT_URL=https://github.com/danoli3/FreeImage
+        # Fixed issues for OSX / iOS for FreeImage compiling in git repo.
         echo "Downloading from $GIT_URL for OSX/iOS"
-		GIT_TAG=3.16.0
 		echo $GIT_URL
 		curl -Lk $GIT_URL/archive/$GIT_TAG.tar.gz -o FreeImage-$GIT_TAG.tar.gz
 		tar -xf FreeImage-$GIT_TAG.tar.gz
 		mv FreeImage-$GIT_TAG FreeImage
 		rm FreeImage-$GIT_TAG.tar.gz
-
 	else
 		curl -LO http://downloads.sourceforge.net/freeimage/FreeImage"$VER".zip
 		unzip -qo FreeImage"$VER".zip
@@ -61,6 +59,36 @@ function prepare() {
 
 		# copy across new Makefile for iOS.
 		cp -v $FORMULA_DIR/Makefile.ios Makefile.ios
+	elif [ "$TYPE" == "android" ]; then
+	    sed -i "s/#define HAVE_SEARCH_H/\/\/#define HAVE_SEARCH_H/g" Source/LibTIFF4/tif_config.h
+	    cat > Source/LibRawLite/src/swab.h << ENDDELIM
+	    #include <stdint.h>
+        #include <asm/byteorder.h>
+        inline void swab(const void *from, void*to, ssize_t n)
+        {
+            ssize_t i;
+            if (n < 0)
+                return;
+            for (i = 0; i < (n/2)*2; i += 2)
+                *((uint16_t*)to+i) = __arch__swab16(*((uint16_t*)from+i));
+        }
+ENDDELIM
+        
+        sed -i "s/#include \"swab.h\"//g" Source/LibRawLite/internal/dcraw_common.cpp
+        echo "#include \"swab.h\"" > Source/LibRawLite/internal/dcraw_common_patched.cpp;
+        cat Source/LibRawLite/internal/dcraw_common.cpp >> Source/LibRawLite/internal/dcraw_common_patched.cpp
+        cat Source/LibRawLite/internal/dcraw_common_patched.cpp > Source/LibRawLite/internal/dcraw_common.cpp
+        rm Source/LibRawLite/internal/dcraw_common_patched.cpp
+        
+        sed -i "s/#include \"swab.h\"//g" Source/LibRawLite/src/libraw_cxx.cpp
+        echo "#include \"swab.h\"" > Source/LibRawLite/src/libraw_cxx_patched.cpp
+        cat Source/LibRawLite/src/libraw_cxx.cpp >> Source/LibRawLite/src/libraw_cxx_patched.cpp
+        cat Source/LibRawLite/src/libraw_cxx_patched.cpp > Source/LibRawLite/src/libraw_cxx.cpp
+        rm Source/LibRawLite/src/libraw_cxx_patched.cpp
+        
+        #rm Source/LibWebP/src/dsp/dec_neon.c
+        
+        sed -i "s/#define WEBP_ANDROID_NEON/\/\/#define WEBP_ANDROID_NEON/g" Source/LibWebP/./src/dsp/dsp.h
 	fi
 }
 
@@ -76,12 +104,10 @@ function build() {
 
 		# Notes: 
         # --- for 3.1+ Must use "-DNO_LCMS -D__ANSI__ -DDISABLE_PERF_MEASUREMENT" to compile LibJXR
-        # --- arm64 has lots of hotfixes using sed inline here.
 		export TOOLCHAIN=$XCODE_DEV_ROOT/Toolchains/XcodeDefault.xctoolchain
 		export TARGET_IOS
         
-        local IOS_ARCHS="i386 x86_64 armv7 armv7s arm64"
-        #local IOS_ARCHS="arm64" # for future arm64
+        local IOS_ARCHS="i386 x86_64 armv7 arm64" #armv7s
         local STDLIB="libc++"
         local CURRENTPATH=`pwd`
 
@@ -115,8 +141,6 @@ function build() {
             unset EXTRA_PLATFORM_CFLAGS EXTRA_PLATFORM_LDFLAGS IOS_PLATFORM NO_LCMS
 
             export ARCH=$IOS_ARCH
-
-
             
             local EXTRA_PLATFORM_CFLAGS=""
 			export EXTRA_PLATFORM_LDFLAGS=""
@@ -166,7 +190,7 @@ function build() {
 			export EXTRA_PLATFORM_LDFLAGS="$EXTRA_PLATFORM_LDFLAGS -isysroot ${CROSS_TOP}/SDKs/${CROSS_SDK} -Wl,-dead_strip -I${CROSS_TOP}/SDKs/${CROSS_SDK}/usr/include/ $MIN_TYPE$MIN_IOS_VERSION "
 
 		   	EXTRA_LINK_FLAGS="-arch $IOS_ARCH -fmessage-length=0 -fdiagnostics-show-note-include-stack -fmacro-backtrace-limit=0 -Wno-trigraphs -fpascal-strings -Os -Wno-missing-field-initializers -Wno-missing-prototypes -Wno-return-type -Wno-non-virtual-dtor -Wno-overloaded-virtual -Wno-exit-time-destructors -Wno-missing-braces -Wparentheses -Wswitch -Wno-unused-function -Wno-unused-label -Wno-unused-parameter -Wno-unused-variable -Wunused-value -Wno-empty-body -Wno-uninitialized -Wno-unknown-pragmas -Wno-shadow -Wno-four-char-constants -Wno-conversion -Wno-constant-conversion -Wno-int-conversion -Wno-bool-conversion -Wno-enum-conversion -Wno-shorten-64-to-32 -Wno-newline-eof -Wno-c++11-extensions -DHAVE_UNISTD_H=1 -DOPJ_STATIC -DNO_LCMS -D__ANSI__ -DDISABLE_PERF_MEASUREMENT -DLIBRAW_NODLL -DLIBRAW_LIBRARY_BUILD -DFREEIMAGE_LIB -fexceptions -fasm-blocks -fstrict-aliasing -Wdeprecated-declarations -Winvalid-offsetof -Wno-sign-conversion -Wmost -Wno-four-char-constants -Wno-unknown-pragmas -DNDEBUG -fPIC -fexceptions -fvisibility=hidden"
-			EXTRA_FLAGS="$EXTRA_LINK_FLAGS -ffast-math -DDISABLE_PERF_MEASUREMENT $MIN_TYPE$MIN_IOS_VERSION -isysroot ${CROSS_TOP}/SDKs/${CROSS_SDK} -I${CROSS_TOP}/SDKs/${CROSS_SDK}/usr/include/"
+			EXTRA_FLAGS="$EXTRA_LINK_FLAGS -ffast-math -DPNG_ARM_NEON_OPT=0 -DDISABLE_PERF_MEASUREMENT $MIN_TYPE$MIN_IOS_VERSION -isysroot ${CROSS_TOP}/SDKs/${CROSS_SDK} -I${CROSS_TOP}/SDKs/${CROSS_SDK}/usr/include/"
 
 		    export CC="$CC $EXTRA_FLAGS"
 			export CFLAGS="-arch $IOS_ARCH $EXTRA_FLAGS"
@@ -194,7 +218,7 @@ function build() {
 		    	echo "Make Successful for ${IOS_ARCH}"
 		    fi
 		    
-     		echo "Completed Build for $IOS_ARCH of FreeType"
+     		echo "Completed Build for $IOS_ARCH of FreeImage"
 
      		mv -v libfreeimage-$IOS_ARCH.a Dist/$TYPE/libfreeimage-$IOS_ARCH.a
 
@@ -219,8 +243,8 @@ function build() {
 		# link into universal lib
 		echo "Running lipo to create fat lib"
 		echo "Please stand by..."
+		#			libfreeimage-armv7s.a \
 		lipo -create libfreeimage-armv7.a \
-					libfreeimage-armv7s.a \
 					libfreeimage-arm64.a \
 					libfreeimage-i386.a \
 					libfreeimage-x86_64.a \
@@ -258,7 +282,29 @@ function build() {
 		unset TOOLCHAIN
 
 	elif [ "$TYPE" == "android" ] ; then
-		echoWarning "TODO: android build"
+        source $LIBS_DIR/openFrameworksCompiled/project/android/paths.make
+        
+        # armv7
+        ABI=armeabi-v7a
+        local BUILD_TO_DIR=$BUILD_DIR/openssl/build/$TYPE/$ABI
+        source ../../formulas/android_configure.sh $ABI
+        export CC="$CC $CFLAGS $LDFLAGS"
+        export CXX="$CXX $CFLAGS $LDFLAGS"
+        make clean -f Makefile.gnu
+        make -f Makefile.gnu libfreeimage.a
+        mkdir -p Dist/$ABI
+        mv libfreeimage.a Dist/$ABI
+        
+        # x86
+        ABI=x86
+        local BUILD_TO_DIR=$BUILD_DIR/openssl/build/$TYPE/$ABI
+        source ../../formulas/android_configure.sh $ABI
+        export CC="$CC $CFLAGS $LDFLAGS"
+        export CXX="$CXX $CFLAGS $LDFLAGS"
+        make clean -f Makefile.gnu
+        make -f Makefile.gnu libfreeimage.a
+        mkdir -p Dist/$ABI
+        mv libfreeimage.a Dist/$ABI
 	fi
 }
 
@@ -266,25 +312,38 @@ function build() {
 function copy() {
 	
 	# headers
+	if [ -d $1/include ]; then
+	    rm -rf $1/include
+	fi
 	mkdir -p $1/include
-	
-	cp -v Dist/*.h $1/include
-	
 
 	# lib
 	if [ "$TYPE" == "osx" ] ; then
+	    cp -v Dist/*.h $1/include
 		mkdir -p $1/lib/$TYPE
 		cp -v Dist/libfreeimage.a $1/lib/$TYPE/freeimage.a
 	elif [ "$TYPE" == "vs" -o "$TYPE" == "win_cb" ] ; then
+	    cp -v Dist/*.h $1/include
 		mkdir -p $1/lib/$TYPE
 		cp -v Dist/FreeImage.lib $1/lib/$TYPE/FreeImage.lib
 		cp -v Dist/FreeImage.dll $1/../../export/$TYPE/FreeImage.dll
 	elif [ "$TYPE" == "ios" ] ; then
-		mkdir -p $1/lib/$TYPE
+
+        if [ -d $1/lib/$TYPE/ ]; then
+            rm -r $1/lib/$TYPE/
+        fi
+       	mkdir -p $1/lib/$TYPE
 		cp -v Dist/$TYPE/freeimage.a $1/lib/$TYPE/freeimage.a
 
 	elif [ "$TYPE" == "android" ] ; then
-		echoWarning "TODO: copy android lib"
+        cp Source/FreeImage.h $1/include
+        if [ -d $1/lib/$TYPE/ ]; then
+            rm -r $1/lib/$TYPE/
+        fi
+        mkdir -p $1/lib/$TYPE/armeabi-v7a
+        cp -rv Dist/armeabi-v7a/*.a $1/lib/$TYPE/armeabi-v7a/
+        mkdir -p $1/lib/$TYPE/x86
+        cp -rv Dist/x86/*.a $1/lib/$TYPE/x86/
 	fi	
 }
 
