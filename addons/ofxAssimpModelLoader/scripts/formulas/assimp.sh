@@ -16,12 +16,6 @@ GIT_TAG=
 
 FORMULA_TYPES=( "osx" "osx-clang-libc++" "ios" )
 
-IOS_SDK_VERSION=7.1
-IOS_SDK_TARGET=5.1.1
-XCODE_ROOT_DIR=/Applications/Xcode.app/Contents
-TOOLCHAIN=$XCODE_ROOT_DIR/Developer/Toolchains/XcodeDefault.xctoolchain
-
-
 # download the source code and unpack it into LIB_NAME
 function download() {
 
@@ -46,41 +40,107 @@ function prepare() {
 	if [ "$TYPE" == "ios" ] ; then
 		# ref: http://stackoverflow.com/questions/6691927/how-to-build-assimp-library-for-ios-device-and-simulator-with-boost-library
 
-        IOS_SDK_DEVICE=iPhoneOS
+        export TOOLCHAIN=$XCODE_DEV_ROOT/Toolchains/XcodeDefault.xctoolchain
+		export TARGET_IOS
+        
+        local IOS_ARCHS="i386 x86_64 armv7 arm64" #armv7s
+        local STDLIB="libc++"
+        local CURRENTPATH=`pwd`
 
-		local buildOpts="-DASSIMP_BUILD_STATIC_LIB=1 -DASSIMP_BUILD_SHARED_LIB=0 -DASSIMP_ENABLE_BOOST_WORKAROUND=1"
+		SDKVERSION=`xcrun -sdk iphoneos --show-sdk-version`	
+        DEVELOPER=$XCODE_DEV_ROOT
+		TOOLCHAIN=${DEVELOPER}/Toolchains/XcodeDefault.xctoolchain
+		VERSION=$VER
+
+        # Validate environment
+        case $XCODE_DEV_ROOT in
+            *\ * )
+                echo "Your Xcode path contains whitespaces, which is not supported."
+                exit 1
+                ;;
+        esac
+        case $CURRENTPATH in
+            *\ * )
+                echo "Your path contains whitespaces, which is not supported by 'make install'."
+                exit 1
+                ;;
+        esac
+
+        mkdir -p "builddir/$TYPE"
+
+        local buildOpts="-DASSIMP_BUILD_STATIC_LIB=1 -DASSIMP_BUILD_SHARED_LIB=0 -DASSIMP_ENABLE_BOOST_WORKAROUND=1"
         libsToLink=""
 
-        archs=("armv7" "armv7s" "arm64" "i386" "x86_64")
-        for curArch in "${archs[@]}"
+        # loop through architectures! yay for loops!
+        for IOS_ARCH in ${IOS_ARCHS}
         do
+        	unset ARCH IOS_DEVROOT IOS_SDKROOT IOS_CC TARGET_NAME HEADER
+            unset CC CPP CXX CXXCPP CFLAGS CXXFLAGS LDFLAGS LD AR AS NM RANLIB LIBTOOL 
+            unset EXTRA_PLATFORM_CFLAGS EXTRA_PLATFORM_LDFLAGS IOS_PLATFORM NO_LCMS
+
+            export CC=$TOOLCHAIN/usr/bin/clang
+			export CPP=$TOOLCHAIN/usr/bin/clang++
+			export CXX=$TOOLCHAIN/usr/bin/clang++
+			export CXXCPP=$TOOLCHAIN/usr/bin/clang++
+	
+			export LD=$TOOLCHAIN/usr/bin/ld
+			export AR=$TOOLCHAIN/usr/bin/ar
+			export AS=$TOOLCHAIN/usr/bin/as
+			export NM=$TOOLCHAIN/usr/bin/nm
+			export RANLIB=$TOOLCHAIN/usr/bin/ranlib
+			export LIBTOOL=$TOOLCHAIN/usr/bin/libtool
+
             echo "Building $curArch "
 
-            IOS_SDK_DEVICE=iPhoneOS
+            local EXTRA_PLATFORM_CFLAGS=""
+			export EXTRA_PLATFORM_LDFLAGS=""
+			if [[ "${IOS_ARCH}" == "i386" || "${IOS_ARCH}" == "x86_64" ]];
+			then
+				PLATFORM="iPhoneSimulator"
+			
+			else
+				PLATFORM="iPhoneOS"
+			fi
 
-            if [ "$curArch" == "i386" ] || [ "$curArch" == "x86_64" ]; then
-                echo 'Target SDK set to SIMULATOR.'
-                IOS_SDK_DEVICE=iPhoneSimulator
-            fi
+			export CROSS_TOP="${DEVELOPER}/Platforms/${PLATFORM}.platform/Developer"
+			export CROSS_SDK="${PLATFORM}${SDKVERSION}.sdk"
+			export BUILD_TOOLS="${DEVELOPER}"
 
-            OUR_DEV_ROOT="$XCODE_ROOT_DIR/Developer/Platforms/$IOS_SDK_DEVICE.platform/Developer"
-            OUR_SDK_ROOT="$OUR_DEV_ROOT/SDKs/$IOS_SDK_DEVICE$IOS_SDK_VERSION.sdk"
+           
+            MIN_IOS_VERSION=$IOS_MIN_SDK_VER
+		    # min iOS version for arm64 is iOS 7
+		
+		    if [[ "${IOS_ARCH}" == "arm64" || "${IOS_ARCH}" == "x86_64" ]]; then
+		    	MIN_IOS_VERSION=7.0 # 7.0 as this is the minimum for these architectures
+		    elif [ "${IOS_ARCH}" == "i386" ]; then
+		    	MIN_IOS_VERSION=5.1 # 6.0 to prevent start linking errors
+		    fi
 
-            OUR_CFLAGS="-arch $curArch -O3 -DNDEBUG -funroll-loops -isysroot $OUR_SDK_ROOT -stdlib=libstdc++ -miphoneos-version-min=$IOS_SDK_TARGET -I$OUR_SDK_ROOT/usr/include/"
+		    MIN_TYPE=-miphoneos-version-min=
+		    if [[ "${IOS_ARCH}" == "i386" || "${IOS_ARCH}" == "x86_64" ]]; then
+		    	MIN_TYPE=-mios-simulator-version-min=
+		    fi
 
-            export LDFLAGS="-L$OUR_SDK_ROOT/usr/lib/"
-            export DEVROOT="$OUR_DEV_ROOT"
-            export SDKROOT="$OUR_SDK_ROOT"
-            export CFLAGS="$OUR_CFLAGS"
-            export CPPFLAGS="$OUR_CFLAGS"
-            export CXXFLAGS="$OUR_CFLAGS"
+			export EXTRA_PLATFORM_CFLAGS="$EXTRA_PLATFORM_CFLAGS"
+		    export EXTRA_PLATFORM_LDFLAGS="$EXTRA_PLATFORM_LDFLAGS -isysroot ${CROSS_TOP}/SDKs/${CROSS_SDK} -Wl,-dead_strip -I${CROSS_TOP}/SDKs/${CROSS_SDK}/usr/include/ $MIN_TYPE$MIN_IOS_VERSION "
+
+		    EXTRA_LINK_FLAGS="-arch $IOS_ARCH -Os -DHAVE_UNISTD_H=1 -DNDEBUG -fPIC -L$CROSS_SDK/usr/lib/ "
+			EXTRA_FLAGS="$EXTRA_LINK_FLAGS -funroll-loops -ffast-math $MIN_TYPE$MIN_IOS_VERSION -isysroot ${CROSS_TOP}/SDKs/${CROSS_SDK} -I${CROSS_TOP}/SDKs/${CROSS_SDK}/usr/include/"
+
+          
+            export LDFLAGS="$EXTRA_LINK_FLAGS"
+            export DEVROOT="$CROSS_TOP"
+            export SDKROOT="$CROSS_SDK"
+            export CFLAGS="$EXTRA_FLAGS"
+            export CPPFLAGS="$EXTRA_FLAGS"
+            export CXXFLAGS="$EXTRA_FLAGS"
 
             #echo " out c_flags are $OUR_CFLAGS "
 
-            cmake -G 'Unix Makefiles' $buildOpts -DCMAKE_C_FLAGS="$OUR_CFLAGS" -DCMAKE_CXX_FLAGS="$OUR_CFLAGS" -DCMAKE_CXX_FLAGS="$OUR_CFLAGS".
+            cmake -G 'Unix Makefiles' $buildOpts -DCMAKE_C_FLAGS="$EXTRA_FLAGS" -DCMAKE_CXX_FLAGS="$EXTRA_FLAGS" -DCMAKE_CXX_FLAGS="$EXTRA_FLAGS".
 
-            $XCODE_ROOT_DIR/Developer/usr/bin/make clean
-            $XCODE_ROOT_DIR/Developer/usr/bin/make assimp -j 8 -l
+            make clean
+            make assimp -j 8 -l
 
             fileToRenameTo="./lib/libassimp-$TYPE-$curArch.a"
 
@@ -88,7 +148,7 @@ function prepare() {
 
             libsToLink="$libsToLink $fileToRenameTo"
 
-            $XCODE_ROOT_DIR/Developer/usr/bin/make clean
+            make clean
 
         done
 
