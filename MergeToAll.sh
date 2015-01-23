@@ -63,19 +63,22 @@ git merge $1 $2
 echo "========================"
 }
 
+
 DoMerge "master" "freeimage-ios"
-DoMerge "master" "freeimage-osx"
-
 DoMerge "master" "freetype-ios"
-DoMerge "master" "freetype-osx"
-
 DoMerge "master" "openssl-ios"
-
 DoMerge "master" "poco-ios"
-
 DoMerge "master" "tess2-ios"
-
 DoMerge "master" "opencv-ios"
+DoMerge "master" "assimp-ios"
+
+DoMerge "master" "freeimage-osx"
+DoMerge "master" "freetype-osx"
+DoMerge "master" "openssl-osx"
+DoMerge "master" "poco-osx"
+DoMerge "master" "tess2-osx"
+DoMerge "master" "opencv-osx"
+DoMerge "master" "assimp-osx"
 
 
 
