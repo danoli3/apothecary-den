@@ -77,6 +77,7 @@ DoMerge "master" "tess2-ios"
 
 DoMerge "master" "opencv-ios"
 
+DoMerge "master" "assimp-ios"
 
 
 
