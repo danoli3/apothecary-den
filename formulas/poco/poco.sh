@@ -8,7 +8,7 @@
 # specify specfic build configs in poco/config using ./configure --config=NAME
 
 # define the version
-VER=apothecary-1.4
+VER=apothecary-1.7
 
 # tools for git use
 GIT_URL=https://github.com/bakercp/poco
@@ -56,8 +56,8 @@ function prepare() {
 		sed -i .tmp "s|STATICOPT_CC    =|STATICOPT_CC    ?= -DNDEBUG -DPOCO_ENABLE_CPP11 -Os -fPIC|" iPhone-clang-libc++
 		sed -i .tmp "s|STATICOPT_CXX   =|STATICOPT_CXX   ?= -DNDEBUG -DPOCO_ENABLE_CPP11 -Os -fPIC|" iPhone-clang-libc++
 		sed -i .tmp "s|OSFLAGS                 = -arch|OSFLAGS                ?= -arch|" iPhone-clang-libc++
-		sed -i .tmp "s|RELEASEOPT_CC   = -DNDEBUG -O2|RELEASEOPT_CC   =  -DPOCO_ENABLE_CPP11 -DNDEBUG -Os -fPIC|" iPhone-clang-libc++
-		sed -i .tmp "s|RELEASEOPT_CXX  = -DNDEBUG -O |RELEASEOPT_CXX  =  -DPOCO_ENABLE_CPP11 -DNDEBUG -Os -fPIC|" iPhone-clang-libc++
+		sed -i .tmp "s|RELEASEOPT_CC   = -DNDEBUG -O2|RELEASEOPT_CC   =  -DNDEBUG -DPOCO_ENABLE_CPP11 -Os -fPIC|" iPhone-clang-libc++
+		sed -i .tmp "s|RELEASEOPT_CXX  = -DNDEBUG -O |RELEASEOPT_CXX  =  -DNDEBUG -DPOCO_ENABLE_CPP11 -Os -fPIC|" iPhone-clang-libc++
 
 		cd ../rules/
 		cp compile compile.orig
@@ -66,13 +66,13 @@ function prepare() {
 		cd ../../
 
 	elif [ "$TYPE" == "vs" ] ; then
-		# Patch the components to exclude those that we aren't using.  
+		# Patch the components to exclude those that we aren't using.
 		if patch -p0 -u -N --dry-run --silent < $FORMULA_DIR/components.patch 2>/dev/null ; then
 			patch -p0 -u < $FORMULA_DIR/components.patch
 		fi
 
 		# Locate the path of the openssl libs distributed with openFrameworks.
-		local OF_LIBS_OPENSSL="../../../../libs/openssl/"
+		local OF_LIBS_OPENSSL="$LIBS_DIR/openssl/"
 
 		# get the absolute path to the included openssl libs
 		local OF_LIBS_OPENSSL_ABS_PATH=$(cd $(dirname $OF_LIBS_OPENSSL); pwd)/$(basename $OF_LIBS_OPENSSL)
@@ -98,16 +98,21 @@ function prepare() {
 function build() {
 
 	if [ "$TYPE" == "osx" ] ; then
-		local BUILD_OPTS="--no-tests --no-samples --static --omit=CppUnit,CppUnit/WinTestRunner,Data/MySQL,Data/ODBC,PageCompiler,PageCompiler/File2Page,CppParser,PocoDoc,ProGen"
-		
+		local BUILD_OPTS="--no-tests --no-samples --static --omit=CppUnit,CppUnit/WinTestRunner,Data/MySQL,Data/ODBC,PageCompiler,PageCompiler/File2Page,CppParser,PDF,PocoDoc,ProGen"
+
 		# 32 bit
 		# For OS 10.9+ we must explicitly set libstdc++ for the 32-bit OSX build.
 		./configure $BUILD_OPTS --cflags=-stdlib=libstdc++ --config=Darwin32
 		make
 
 		# 64 bit
+
+		export POCO_ENABLE_CPP11=1
+
 		./configure $BUILD_OPTS --config=Darwin64-clang-libc++
 		make
+
+		unset POCO_ENABLE_CPP11
 
 		cd lib/Darwin
 
@@ -128,10 +133,10 @@ function build() {
 		cmd //c buildwin.cmd ${VS_VER}0 build static_md both Win32 nosamples notests
 
 	elif [ "$TYPE" == "win_cb" ] ; then
-		local BUILD_OPTS="--no-tests --no-samples --static --omit=CppUnit,CppUnit/WinTestRunner,Data/MySQL,Data/ODBC,PageCompiler,PageCompiler/File2Page,CppParser,PocoDoc,ProGen"
+		local BUILD_OPTS="--no-tests --no-samples --static --omit=CppUnit,CppUnit/WinTestRunner,Data/MySQL,Data/ODBC,PageCompiler,PageCompiler/File2Page,CppParser,PDF,PocoDoc,ProGen"
 
 		# Locate the path of the openssl libs distributed with openFrameworks.
-		local OF_LIBS_OPENSSL="../../../../libs/openssl/"
+		local OF_LIBS_OPENSSL="$LIBS_DIR/openssl/"
 
 		# get the absolute path to the included openssl libs
 		local OF_LIBS_OPENSSL_ABS_PATH=$(cd $(dirname $OF_LIBS_OPENSSL); pwd)/$(basename $OF_LIBS_OPENSSL)
@@ -152,31 +157,31 @@ function build() {
 	elif [ "$TYPE" == "ios" ] ; then
 
 
-		SDKVERSION=`xcrun -sdk iphoneos --show-sdk-version`	
+		SDKVERSION=`xcrun -sdk iphoneos --show-sdk-version`
 		set -e
 		CURRENTPATH=`pwd`
-		
+
 		DEVELOPER=$XCODE_DEV_ROOT
 		TOOLCHAIN=${DEVELOPER}/Toolchains/XcodeDefault.xctoolchain
 		VERSION=$VER
 
-		local IOS_ARCHS="i386 x86_64 armv7 armv7s arm64"
+		local IOS_ARCHS="i386 x86_64 armv7 arm64"
 		echo "--------------------"
 		echo $CURRENTPATH
 
 		# Validate environment
-		case $XCODE_DEV_ROOT in  
+		case $XCODE_DEV_ROOT in
 		     *\ * )
 		           echo "Your Xcode path contains whitespaces, which is not supported."
 		           exit 1
 		          ;;
 		esac
-		case $CURRENTPATH in  
+		case $CURRENTPATH in
 		     *\ * )
 		           echo "Your path contains whitespaces, which is not supported by 'make install'."
 		           exit 1
 		          ;;
-		esac 
+		esac
 
 		echo "------------"
 		# To Fix: global:62: *** Current working directory not under $PROJECT_BASE.  Stop. make
@@ -187,7 +192,7 @@ function build() {
 		local BUILD_POCO_CONFIG_SIMULATOR=iPhoneSimulator-clang-libc++
 
 		# Locate the path of the openssl libs distributed with openFrameworks.
-		local OF_LIBS_OPENSSL="../../../../libs/openssl/"
+		local OF_LIBS_OPENSSL="$LIBS_DIR/openssl/"
 
 		# get the absolute path to the included openssl libs
 		local OF_LIBS_OPENSSL_ABS_PATH=$(cd $(dirname $OF_LIBS_OPENSSL); pwd)/$(basename $OF_LIBS_OPENSSL)
@@ -195,8 +200,8 @@ function build() {
 		local OPENSSL_INCLUDE=$OF_LIBS_OPENSSL_ABS_PATH/include
 		local OPENSSL_LIBS=$OF_LIBS_OPENSSL_ABS_PATH/lib/ios
 
-		local BUILD_OPTS="--no-tests --no-samples --static --omit=CppUnit,CppUnit/WinTestRunner,Data/MySQL,Data/ODBC,PageCompiler,PageCompiler/File2Page,CppParser,PocoDoc,ProGen --include-path=$OPENSSL_INCLUDE --library-path=$OPENSSL_LIBS"
-		
+		local BUILD_OPTS="--no-tests --no-samples --static --omit=CppUnit,CppUnit/WinTestRunner,Data/MySQL,Data/ODBC,PageCompiler,PageCompiler/File2Page,CppParser,PDF,PocoDoc,ProGen --include-path=$OPENSSL_INCLUDE --library-path=$OPENSSL_LIBS"
+
 		STATICOPT_CC=-fPIC
 		STATICOPT_CXX=-fPIC
 
@@ -205,14 +210,14 @@ function build() {
 		do
 			MIN_IOS_VERSION=$IOS_MIN_SDK_VER
 		    # min iOS version for arm64 is iOS 7
-			
+
 		    if [[ "${IOS_ARCH}" == "arm64" || "${IOS_ARCH}" == "x86_64" ]]; then
 		    	MIN_IOS_VERSION=7.0 # 7.0 as this is the minimum for these architectures
 		    elif [ "${IOS_ARCH}" == "i386" ]; then
 		    	MIN_IOS_VERSION=5.1 # 6.0 to prevent start linking errors
 		    fi
 		    export IPHONE_SDK_VERSION_MIN=$IOS_MIN_SDK_VER
-			
+
 			export POCO_TARGET_OSARCH=$IOS_ARCH
 
 			MIN_TYPE=-miphoneos-version-min=
@@ -233,11 +238,11 @@ function build() {
 			mkdir -p "$CURRENTPATH/build/$TYPE/$IOS_ARCH"
 			LOG="$CURRENTPATH/build/$TYPE/$IOS_ARCH/poco-$IOS_ARCH-${VER}.log"
 			set +e
-			
+
 			if [[ "${IOS_ARCH}" == "i386" || "${IOS_ARCH}" == "x86_64" ]];
 			then
 				export OSFLAGS="-arch $POCO_TARGET_OSARCH -fPIC -DPOCO_ENABLE_CPP11 -isysroot ${CROSS_TOP}/SDKs/${CROSS_SDK} $MIN_TYPE$IPHONE_SDK_VERSION_MIN"
-			else 
+			else
 				export OSFLAGS="-arch $POCO_TARGET_OSARCH -fPIC -DPOCO_ENABLE_CPP11 -isysroot ${CROSS_TOP}/SDKs/${CROSS_SDK} $MIN_TYPE$IPHONE_SDK_VERSION_MIN"
 			fi
 			echo "--------------------"
@@ -246,10 +251,10 @@ function build() {
 			echo "Configuring for ${IOS_ARCH} ..."
 			./configure $BUILD_OPTS --config=$BUILD_POCO_CONFIG_IPHONE > "${LOG}" 2>&1
 
-			if [ $? != 0 ]; then 
+			if [ $? != 0 ]; then
 		    	echo "Problem while configure - Please check ${LOG}"
 		    	exit 1
-		    else 
+		    else
 		    	echo "Configure successful"
 		    fi
 		    echo "--------------------"
@@ -259,17 +264,17 @@ function build() {
 			echo "Please stand by..."
 			make >> "${LOG}" 2>&1
 			if [ $? != 0 ];
-		    then 
+		    then
 		    	echo "Problem while make - Please check ${LOG}"
 		    	exit 1
 		    else
 		    	echo "Make Successful for ${IOS_ARCH}"
 		    fi
-			unset POCO_TARGET_OSARCH IPHONE_SDK_VERSION_MIN OSFLAGS 
+			unset POCO_TARGET_OSARCH IPHONE_SDK_VERSION_MIN OSFLAGS
 			unset CROSS_TOP CROSS_SDK BUILD_TOOLS
 
 			echo "--------------------"
- 
+
 		done
 
 		cd lib/iPhoneOS
@@ -278,7 +283,7 @@ function build() {
 		for lib in $( ls -1 i386) ; do
 			local renamedLib=$(echo $lib | sed 's|lib||')
 			if [ ! -e $renamedLib ] ; then
-				lipo -c armv7/$lib armv7s/$lib arm64/$lib i386/$lib x86_64/$lib -o ../ios/$renamedLib
+				lipo -c armv7/$lib arm64/$lib i386/$lib x86_64/$lib -o ../ios/$renamedLib
 			fi
 		done
 
@@ -293,7 +298,7 @@ function build() {
 		for TOBESTRIPPED in $( ls -1) ; do
 			strip -x $TOBESTRIPPED >> "${SLOG}" 2>&1
 			if [ $? != 0 ];
-		    then 
+		    then
 		    	echo "Problem while stripping lib - Please check ${SLOG}"
 		    	exit 1
 		    else
@@ -303,7 +308,7 @@ function build() {
 
 
 		cd ../../
-				
+
 		echo "--------------------"
 		echo "Reseting changed files back to originals"
 		cd build/config
@@ -317,13 +322,13 @@ function build() {
 		echo "Completed."
 
 	elif [ "$TYPE" == "android" ] ; then
-		local BUILD_OPTS="--no-tests --no-samples --static --omit=CppUnit,CppUnit/WinTestRunner,Data/MySQL,Data/ODBC,PageCompiler,PageCompiler/File2Page,CppParser,PocoDoc,ProGen"
-		
+		local BUILD_OPTS="--no-tests --no-samples --static --omit=CppUnit,CppUnit/WinTestRunner,Data/MySQL,Data/ODBC,PageCompiler,PageCompiler/File2Page,CppParser,PDF,PocoDoc,ProGen"
+
 		local OLD_PATH=$PATH
 
 		export PATH=$PATH:$BUILD_DIR/Toolchains/Android/androideabi/bin:$BUILD_DIR/Toolchains/Android/x86/bin
 
-		local OF_LIBS_OPENSSL="../../../../libs/openssl/"
+		local OF_LIBS_OPENSSL="$LIBS_DIR/openssl/"
 
 		# get the absolute path to the included openssl libs
 		local OF_LIBS_OPENSSL_ABS_PATH=$(cd $(dirname $OF_LIBS_OPENSSL); pwd)/$(basename $OF_LIBS_OPENSSL)
@@ -331,7 +336,7 @@ function build() {
 		local OPENSSL_INCLUDE=$OF_LIBS_OPENSSL_ABS_PATH/include
 		local OPENSSL_LIBS=$OF_LIBS_OPENSSL_ABS_PATH/lib/
 
-		local BUILD_OPTS="--no-tests --no-samples --static --omit=CppUnit,CppUnit/WinTestRunner,Data/MySQL,Data/ODBC,PageCompiler,PageCompiler/File2Page,CppParser,PocoDoc,ProGen"
+		local BUILD_OPTS="--no-tests --no-samples --static --omit=CppUnit,CppUnit/WinTestRunner,Data/MySQL,Data/ODBC,PageCompiler,PageCompiler/File2Page,CppParser,PDF,PocoDoc,ProGen"
 
 		./configure $BUILD_OPTS \
 					--include-path=$OPENSSL_INCLUDE \
@@ -363,30 +368,30 @@ function build() {
 		export PATH=$OLD_PATH
 
 	elif [ "$TYPE" == "linux" ] ; then
-		local BUILD_OPTS="--no-tests --no-samples --static --omit=CppUnit,CppUnit/WinTestRunner,Data/MySQL,Data/ODBC,PageCompiler,PageCompiler/File2Page,CppParser,PocoDoc,ProGen"
+		local BUILD_OPTS="--no-tests --no-samples --static --omit=CppUnit,CppUnit/WinTestRunner,Data/MySQL,Data/ODBC,PageCompiler,PageCompiler/File2Page,CppParser,PDF,PocoDoc,ProGen"
 		./configure $BUILD_OPTS
 		make
 		# delete debug builds
 		rm lib/Linux/$(uname -m)/*d.a
 	elif [ "$TYPE" == "linux64" ] ; then
-		local BUILD_OPTS="--no-tests --no-samples --static --omit=CppUnit,CppUnit/WinTestRunner,Data/MySQL,Data/ODBC,PageCompiler,PageCompiler/File2Page,CppParser,PocoDoc,ProGen"
+		local BUILD_OPTS="--no-tests --no-samples --static --omit=CppUnit,CppUnit/WinTestRunner,Data/MySQL,Data/ODBC,PageCompiler,PageCompiler/File2Page,CppParser,PDF,PocoDoc,ProGen"
 		./configure $BUILD_OPTS
 		make
 		# delete debug builds
 		rm lib/Linux/x86_64/*d.a
 	elif [ "$TYPE" == "linuxarmv6l" ] ; then
-		local BUILD_OPTS="--no-tests --no-samples --static --omit=CppUnit,CppUnit/WinTestRunner,Data/MySQL,Data/ODBC,PageCompiler,PageCompiler/File2Page,CppParser,PocoDoc,ProGen"
+		local BUILD_OPTS="--no-tests --no-samples --static --omit=CppUnit,CppUnit/WinTestRunner,Data/MySQL,Data/ODBC,PageCompiler,PageCompiler/File2Page,CppParser,PDF,PocoDoc,ProGen"
 		./configure $BUILD_OPTS
 		make
 		# delete debug builds
 		rm lib/Linux/armv6l/*d.a
 	elif [ "$TYPE" == "linuxarmv7l" ] ; then
-		local BUILD_OPTS="--no-tests --no-samples --static --omit=CppUnit,CppUnit/WinTestRunner,Data/MySQL,Data/ODBC,PageCompiler,PageCompiler/File2Page,CppParser,PocoDoc,ProGen"
+		local BUILD_OPTS="--no-tests --no-samples --static --omit=CppUnit,CppUnit/WinTestRunner,Data/MySQL,Data/ODBC,PageCompiler,PageCompiler/File2Page,CppParser,PDF,PocoDoc,ProGen"
 		./configure $BUILD_OPTS
 		make
 		# delete debug builds
 		rm lib/Linux/armv7l/*d.a
-	else 
+	else
 		echoWarning "TODO: build $TYPE lib"
 	fi
 }
@@ -404,14 +409,13 @@ function copy() {
 	cp -Rv MongoDB/include/Poco/MongoDB $1/include/Poco
 	cp -Rv Net/include/Poco/Net $1/include/Poco
 	cp -Rv NetSSL_OpenSSL/include/Poco/Net/* $1/include/Poco/Net
-	cp -Rv PDF/include/Poco/PDF $1/include/Poco
 	cp -Rv SevenZip/include/Poco/SevenZip $1/include/Poco
 	cp -Rv Util/include/Poco/Util $1/include/Poco
 	cp -Rv XML/include/Poco/* $1/include/Poco
 	cp -Rv Zip/include/Poco/Zip $1/include/Poco
 
 	# libs
-	if [ "$TYPE" == "osx" ] ; then		
+	if [ "$TYPE" == "osx" ] ; then
 		mkdir -p $1/lib/$TYPE
 		cp -v lib/Darwin/*.a $1/lib/$TYPE
 	elif [ "$TYPE" == "ios" ] ; then
