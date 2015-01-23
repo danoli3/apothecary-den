@@ -37,15 +37,29 @@ function build() {
 
 		local STDLIB="libstdc++"
 		local OSX_ARCH="i386"
+
+		set -e
+		CURRENTPATH=`pwd`
+
+		# Validate environment
+		case $XCODE_DEV_ROOT in  
+		     *\ * )
+		           echo "Your Xcode path contains whitespaces, which is not supported."
+		           exit 1
+		          ;;
+		esac
+		case $CURRENTPATH in  
+		     *\ * )
+		           echo "Your path contains whitespaces, which is not supported by 'make install'."
+		           exit 1
+		          ;;
+		esac 
+
 		local TOOLCHAIN=$XCODE_DEV_ROOT/Toolchains/XcodeDefault.xctoolchain 
-		export CC=$TOOLCHAIN/usr/bin/cc
-		export CPP=$TOOLCHAIN/usr/bin/cpp
-		export CXX=$TOOLCHAIN/usr/bin/c++
+		
 
 		./configure --prefix=$BUILD_TO_DIR --without-bzip2 --enable-static=yes --enable-shared=no \
-			CFLAGS="-arch $OSX_ARCH -pipe -stdlib=$STDLIB -Wno-trigraphs -fpascal-strings -O2 -Wreturn-type -Wunused-variable -fmessage-length=0 -fvisibility=hidden" \
-			CPP=$CPP \
-			CXX=$CXX
+			CFLAGS="-arch $OSX_ARCH -pipe -stdlib=$STDLIB -Wno-trigraphs -fpascal-strings -O2 -Wreturn-type -Wunused-variable -fmessage-length=0 -fvisibility=hidden"
 		make clean 
 		make
 		make install
@@ -57,9 +71,7 @@ function build() {
 		local STDLIB="libc++"
 		local OSX_ARCH="x86_64"
 		./configure --prefix=$BUILD_TO_DIR --without-bzip2 --enable-static=yes --enable-shared=no \
-			CFLAGS="-arch $OSX_ARCH -pipe -stdlib=$STDLIB -Wno-trigraphs -fpascal-strings -O2 -Wreturn-type -Wunused-variable -fmessage-length=0 -fvisibility=hidden" \
-			CPP=$CPP \
-			CXX=$CXX
+			CFLAGS="-arch $OSX_ARCH -pipe -stdlib=$STDLIB -Wno-trigraphs -fpascal-strings -O2 -Wreturn-type -Wunused-variable -fmessage-length=0 -fvisibility=hidden"
 		make clean
 		make
 		make install
@@ -101,7 +113,7 @@ function build() {
 		COMPILER_CPPTYPE=clang++ # clang, gcc
 		STDLIB=libc++
 
-		IOS_ARCHS="i386 x86_64 armv7 armv7s arm64"
+		IOS_ARCHS="i386 x86_64 armv7 arm64" # armv7s
 
 		SDKVERSION=`xcrun -sdk iphoneos --show-sdk-version`	
 		set -e
@@ -239,8 +251,9 @@ function build() {
 		echo "Please stand by..."
 		# link into universal lib
 		cd lib/$TYPE/
+
+		# libfreetype-armv7s.a  \
 		lipo -create libfreetype-armv7.a \
-					libfreetype-armv7s.a  \
 					libfreetype-arm64.a \
 					libfreetype-i386.a \
 					libfreetype-x86_64.a \
