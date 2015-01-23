@@ -1,0 +1,6 @@
+language: objective-c
+compiler: clang
+before-script:
+ - ./apothecary -t osx download glew
+script:
+ - ./apothecary -t osx update glew
