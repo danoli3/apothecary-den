@@ -8,7 +8,7 @@
 # specify specfic build configs in poco/config using ./configure --config=NAME
 
 # define the version
-VER=apothecary-1.5
+VER=apothecary-1.7
 
 # tools for git use
 GIT_URL=https://github.com/bakercp/poco
@@ -165,7 +165,7 @@ function build() {
 		TOOLCHAIN=${DEVELOPER}/Toolchains/XcodeDefault.xctoolchain
 		VERSION=$VER
 
-		local IOS_ARCHS="i386 x86_64 armv7 armv7s arm64"
+		local IOS_ARCHS="i386 x86_64 armv7 arm64"
 		echo "--------------------"
 		echo $CURRENTPATH
 
@@ -283,7 +283,7 @@ function build() {
 		for lib in $( ls -1 i386) ; do
 			local renamedLib=$(echo $lib | sed 's|lib||')
 			if [ ! -e $renamedLib ] ; then
-				lipo -c armv7/$lib armv7s/$lib arm64/$lib i386/$lib x86_64/$lib -o ../ios/$renamedLib
+				lipo -c armv7/$lib arm64/$lib i386/$lib x86_64/$lib -o ../ios/$renamedLib
 			fi
 		done
 

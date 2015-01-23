@@ -98,8 +98,8 @@ extern "C" {
 
 #if !(defined(VMS) || defined(__VMS)) /* VMS uses logical names instead */
 #if defined(HEADER_CRYPTLIB_H) && !defined(OPENSSLDIR)
-#define ENGINESDIR "/Users/danielrosser/Documents/CodeRepositories/apothecary-den/build/openssl/build/ios/x86_64/lib/engines"
-#define OPENSSLDIR "/Users/danielrosser/Documents/CodeRepositories/apothecary-den/build/openssl/build/ios/x86_64"
+#define ENGINESDIR "/Users/danielrosser/Documents/openFrameworks/scripts/apothecary/build/openssl/build/ios/x86_64/lib/engines"
+#define OPENSSLDIR "/Users/danielrosser/Documents/openFrameworks/scripts/apothecary/build/openssl/build/ios/x86_64"
 #endif
 #endif
 
