@@ -1,6 +1,6 @@
 language: objective-c
 compiler: clang
 before-script:
- - ./apothecary -t osx download FreeImage
+ - ./apothecary -t osx download tess2
 script:
- - ./apothecary -t osx update FreeImage
+ - ./apothecary -t osx update tess2
