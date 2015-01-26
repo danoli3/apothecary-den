@@ -1,6 +1,6 @@
 language: objective-c
 compiler: clang
 before-script:
- - ./apothecary -t osx download assimp
+ - ./apothecary -t osx download ofxAssimpModelLoader
 script:
- - ./apothecary -t osx update assimp
+ - ./apothecary -t osx update ofxAssimpModelLoader
