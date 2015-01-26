@@ -1,6 +1,6 @@
 language: objective-c
 compiler: clang
 before-script:
- - ./apothecary -t osx download opencv
+ - ./apothecary -t osx download ofxOpencv
 script:
- - ./apothecary -t osx update opencv
+ - ./apothecary -t osx update ofxOpencv

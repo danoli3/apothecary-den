@@ -291,7 +291,6 @@ function copy() {
     cp -R $LIB_FOLDER_OUT/lib/ $1/lib/$TYPE/
   fi
 
-
 }
  
 # executed inside the lib src dir
