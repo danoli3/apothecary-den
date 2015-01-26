@@ -65,19 +65,12 @@ function build() {
         export TOOLCHAIN=$XCODE_DEV_ROOT/Toolchains/XcodeDefault.xctoolchain
 		export TARGET_IOS
         
-<<<<<<< HEAD
-        local IOS_ARCHS="i386 x86_64 armv7 arm64" #armv7s
-        local STDLIB="libc++"
-        local CURRENTPATH=`pwd`
-
-=======
         local IOS_ARCHS="armv7 arm64 i386 x86_64" #armv7s
         local STDLIB="libc++"
         local CURRENTPATH=`pwd`
 
         echo $CURRENTPATH
 
->>>>>>> master
 		SDKVERSION=`xcrun -sdk iphoneos --show-sdk-version`	
         DEVELOPER=$XCODE_DEV_ROOT
 		TOOLCHAIN=${DEVELOPER}/Toolchains/XcodeDefault.xctoolchain
@@ -99,34 +92,6 @@ function build() {
 
         mkdir -p "builddir/$TYPE"
 
-<<<<<<< HEAD
-        local buildOpts="-DASSIMP_BUILD_STATIC_LIB=1 -DASSIMP_BUILD_SHARED_LIB=0 -DASSIMP_ENABLE_BOOST_WORKAROUND=1"
-        libsToLink=""
-
-        # loop through architectures! yay for loops!
-        for IOS_ARCH in ${IOS_ARCHS}
-        do
-        	unset ARCH IOS_DEVROOT IOS_SDKROOT IOS_CC TARGET_NAME HEADER
-            unset CC CPP CXX CXXCPP CFLAGS CXXFLAGS LDFLAGS LD AR AS NM RANLIB LIBTOOL 
-            unset EXTRA_PLATFORM_CFLAGS EXTRA_PLATFORM_LDFLAGS IOS_PLATFORM NO_LCMS
-
-            export CC=$TOOLCHAIN/usr/bin/clang
-			export CPP=$TOOLCHAIN/usr/bin/clang++
-			export CXX=$TOOLCHAIN/usr/bin/clang++
-			export CXXCPP=$TOOLCHAIN/usr/bin/clang++
-	
-			export LD=$TOOLCHAIN/usr/bin/ld
-			export AR=$TOOLCHAIN/usr/bin/ar
-			export AS=$TOOLCHAIN/usr/bin/as
-			export NM=$TOOLCHAIN/usr/bin/nm
-			export RANLIB=$TOOLCHAIN/usr/bin/ranlib
-			export LIBTOOL=$TOOLCHAIN/usr/bin/libtool
-
-            echo "Building $curArch "
-
-            local EXTRA_PLATFORM_CFLAGS=""
-			export EXTRA_PLATFORM_LDFLAGS=""
-=======
         libsToLink=""
 
         echo $DEVELOPER
@@ -154,7 +119,6 @@ function build() {
             echo "Building $IOS_ARCH "
 
 			export PLATFORM=""
->>>>>>> master
 			if [[ "${IOS_ARCH}" == "i386" || "${IOS_ARCH}" == "x86_64" ]];
 			then
 				PLATFORM="iPhoneSimulator"
@@ -164,11 +128,7 @@ function build() {
 			fi
 
 			export CROSS_TOP="${DEVELOPER}/Platforms/${PLATFORM}.platform/Developer"
-<<<<<<< HEAD
-			export CROSS_SDK="${PLATFORM}${SDKVERSION}.sdk"
-=======
 			export CROSS_SDK="${PLATFORM}.sdk"
->>>>>>> master
 			export BUILD_TOOLS="${DEVELOPER}"
 
            
@@ -186,21 +146,6 @@ function build() {
 		    	MIN_TYPE=-mios-simulator-version-min=
 		    fi
 
-<<<<<<< HEAD
-			export EXTRA_PLATFORM_CFLAGS="$EXTRA_PLATFORM_CFLAGS"
-		    export EXTRA_PLATFORM_LDFLAGS="$EXTRA_PLATFORM_LDFLAGS -isysroot ${CROSS_TOP}/SDKs/${CROSS_SDK} -Wl,-dead_strip -I${CROSS_TOP}/SDKs/${CROSS_SDK}/usr/include/ $MIN_TYPE$MIN_IOS_VERSION "
-
-		    EXTRA_LINK_FLAGS="-arch $IOS_ARCH -Os -DHAVE_UNISTD_H=1 -DNDEBUG -fPIC -L$CROSS_SDK/usr/lib/ "
-			EXTRA_FLAGS="$EXTRA_LINK_FLAGS -funroll-loops -ffast-math $MIN_TYPE$MIN_IOS_VERSION -isysroot ${CROSS_TOP}/SDKs/${CROSS_SDK} -I${CROSS_TOP}/SDKs/${CROSS_SDK}/usr/include/"
-
-          
-            export LDFLAGS="$EXTRA_LINK_FLAGS"
-            export DEVROOT="$CROSS_TOP"
-            export SDKROOT="$CROSS_SDK"
-            export CFLAGS="$EXTRA_FLAGS"
-            export CPPFLAGS="$EXTRA_FLAGS"
-            export CXXFLAGS="$EXTRA_FLAGS"
-=======
 			export EXTRA_PLATFORM_CFLAGS="$"
 		    export EXTRA_PLATFORM_LDFLAGS="$ -L${CROSS_TOP}/SDKs/$CROSS_SDK/usr/lib/"
 
@@ -217,7 +162,6 @@ function build() {
             export CFLAGS="$EXTRA_FLAGS -std=c11"
             export CPPFLAGS="$EXTRA_FLAGS -std=c++11"
             export CXXFLAGS="$EXTRA_FLAGS -std=c++11"
->>>>>>> master
 
             #echo " out c_flags are $OUR_CFLAGS "
             rm -f CMakeCache.txt
@@ -225,18 +169,11 @@ function build() {
 
             $XCODE_DEV_ROOT/usr/bin/make clean
 
-<<<<<<< HEAD
-            cmake -G 'Unix Makefiles' $buildOpts -DCMAKE_C_FLAGS="$EXTRA_FLAGS" -DCMAKE_CXX_FLAGS="$EXTRA_FLAGS" -DCMAKE_CXX_FLAGS="$EXTRA_FLAGS".
-
-            make clean
-            make assimp -j 8 -l
-=======
 			echo "--------------------"
 		    echo "Running make for ${IOS_ARCH}"
 			echo "Please stand by..."
 
             $XCODE_DEV_ROOT/usr/bin/make assimp -j 8 -l
->>>>>>> master
 
             fileToRenameTo="./builddir/$TYPE/libassimp-$IOS_ARCH.a"
 
@@ -244,13 +181,9 @@ function build() {
 
             libsToLink="$libsToLink $fileToRenameTo"
 
-<<<<<<< HEAD
-            make clean
-=======
             $XCODE_DEV_ROOT/usr/bin/make clean
 
             echo "--------------------"
->>>>>>> master
 
         done
 
