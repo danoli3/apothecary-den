@@ -1,12 +1,10 @@
-apothecary-den
-==============
 
-Apothecary Formula Automated Testing (Travis has volunteered to drink our potions!)
 
-What is Apothecary? 
-----------
-It is a Alchemy lab that mixes formulas and potions to build and update the C/C++ lib dependencies for [openframeworks/openFrameworks](https://github.com/openframeworks/openFrameworks)
+#### FreeImage Build iOS Status
+- [![Build Status](https://travis-ci.org/danoli3/apothecary-den.svg?branch=freeimage-ios)](https://travis-ci.org/danoli3/apothecary-den)
 
+<<<<<<< HEAD
+=======
 More info: [openFrameworks/scripts/apothecary](https://github.com/openframeworks/openFrameworks/tree/master/scripts/apothecary)
 
 
@@ -33,3 +31,4 @@ More info: [openFrameworks/scripts/apothecary](https://github.com/openframeworks
 
 
 ----------------------------------
+>>>>>>> master

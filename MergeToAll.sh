@@ -56,27 +56,12 @@ echo "From Branch:    $1"
 echo "To Merge to Branch:  $2"
 
 git checkout $2
-if [ $? != 0 ];
-then
-    echo "Problem while checking out $1"
-    exit 1
-else
-    echo "Checkout successful for $1"
-fi
 # merge 1 from to 2
 git merge $1 $2
-if [ $? != 0 ];
-then
-    echo "Problem while merging $1 into $2"
-    exit 1
-else
-    echo "Merge successful for $1 into $2"
-fi
 
 
 echo "========================"
 }
-
 
 DoMerge "master" "freeimage-ios"
 DoMerge "master" "freetype-ios"
