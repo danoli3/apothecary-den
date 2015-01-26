@@ -304,7 +304,7 @@ function build() {
 			./configure $BUILD_OPTS --config=$BUILD_POCO_CONFIG_IPHONE > "${LOG}" 2>&1
 
 			if [ $? != 0 ]; then
-				tail -n 100 $LOG
+				tail -n 100 "${LOG}"
 		    	echo "Problem while configure - Please check ${LOG}"
 		    	exit 1
 		    else
@@ -315,11 +315,11 @@ function build() {
 			make >> "${LOG}" 2>&1
 			if [ $? != 0 ];
 		    then
-		    	tail -n 100 $LOG
+		    	tail -n 100 "${LOG}"
 		    	echo "Problem while make - Please check ${LOG}"
 		    	exit 1
 		    else
-		    	tail -n 10 $LOG
+		    	tail -n 10 "${LOG}"
 		    	echo "Make Successful for ${IOS_ARCH}"
 		    fi
 			unset POCO_TARGET_OSARCH IPHONE_SDK_VERSION_MIN OSFLAGS
@@ -351,6 +351,7 @@ function build() {
 			strip -x $TOBESTRIPPED >> "${SLOG}" 2>&1
 			if [ $? != 0 ];
 		    then
+		    	tail -n 100 "${SLOG}"
 		    	echo "Problem while stripping lib - Please check ${SLOG}"
 		    	exit 1
 		    else
