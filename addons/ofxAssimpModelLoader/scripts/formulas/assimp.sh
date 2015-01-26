@@ -27,12 +27,34 @@ function download() {
 
     # fix an issue with static libs being disabled - see issue https://github.com/assimp/assimp/issues/271
     # this could be fixed fairly soon - so see if its needed for future releases.
-    sed -i -e 's/SET ( ASSIMP_BUILD_STATIC_LIB OFF/SET ( ASSIMP_BUILD_STATIC_LIB ON/g' assimp/CMakeLists.txt
-    sed -i -e 's/option ( BUILD_SHARED_LIBS "Build a shared version of the library" ON )/option ( BUILD_SHARED_LIBS "Build a shared version of the library" OFF )/g' assimp/CMakeLists.txt
+
+    if [ "$TYPE" == "ios" ] ; then
+
+    	echo "iOS"
+
+	else 
+
+    	sed -i -e 's/SET ( ASSIMP_BUILD_STATIC_LIB OFF/SET ( ASSIMP_BUILD_STATIC_LIB ON/g' assimp/CMakeLists.txt
+    	sed -i -e 's/option ( BUILD_SHARED_LIBS "Build a shared version of the library" ON )/option ( BUILD_SHARED_LIBS "Build a shared version of the library" OFF )/g' assimp/CMakeLists.txt
+	fi
 }
 
 # prepare the build environment, executed inside the lib src dir
 function prepare() {
+	echo "Prepare"
+
+	# if [ "$TYPE" == "ios" ] ; then
+
+	# 	# # patch outdated Makefile.osx provided with FreeImage, check if patch was applied first
+	# 	# if patch -p0 -u -N --dry-run --silent < $FORMULA_DIR/assimp.ios.patch 2>/dev/null ; then
+	# 	# 	patch -p0 -u < $FORMULA_DIR/assimp.ios.patch
+	# 	# fi
+
+	# fi
+}
+
+# executed inside the lib src dir
+function build() {
 
     rm -f CMakeCache.txt || true
 
@@ -43,10 +65,19 @@ function prepare() {
         export TOOLCHAIN=$XCODE_DEV_ROOT/Toolchains/XcodeDefault.xctoolchain
 		export TARGET_IOS
         
+<<<<<<< HEAD
         local IOS_ARCHS="i386 x86_64 armv7 arm64" #armv7s
         local STDLIB="libc++"
         local CURRENTPATH=`pwd`
 
+=======
+        local IOS_ARCHS="armv7 arm64 i386 x86_64" #armv7s
+        local STDLIB="libc++"
+        local CURRENTPATH=`pwd`
+
+        echo $CURRENTPATH
+
+>>>>>>> master
 		SDKVERSION=`xcrun -sdk iphoneos --show-sdk-version`	
         DEVELOPER=$XCODE_DEV_ROOT
 		TOOLCHAIN=${DEVELOPER}/Toolchains/XcodeDefault.xctoolchain
@@ -68,6 +99,7 @@ function prepare() {
 
         mkdir -p "builddir/$TYPE"
 
+<<<<<<< HEAD
         local buildOpts="-DASSIMP_BUILD_STATIC_LIB=1 -DASSIMP_BUILD_SHARED_LIB=0 -DASSIMP_ENABLE_BOOST_WORKAROUND=1"
         libsToLink=""
 
@@ -94,6 +126,35 @@ function prepare() {
 
             local EXTRA_PLATFORM_CFLAGS=""
 			export EXTRA_PLATFORM_LDFLAGS=""
+=======
+        libsToLink=""
+
+        echo $DEVELOPER
+
+        # loop through architectures! yay for loops!
+        for IOS_ARCH in ${IOS_ARCHS}
+        do
+        	unset IOS_DEVROOT IOS_SDKROOT
+            unset CC CPP CXX CXXCPP CFLAGS CXXFLAGS LDFLAGS LD AR AS NM RANLIB LIBTOOL 
+            unset EXTRA_PLATFORM_CFLAGS EXTRA_PLATFORM_LDFLAGS
+            unset CROSS_TOP CROSS_SDK BUILD_TOOLS PLATFORM 
+
+            export CC=$TOOLCHAIN/usr/bin/clang
+			export CPP=$TOOLCHAIN/usr/bin/clang++
+			export CXX=$TOOLCHAIN/usr/bin/clang++
+			export CXXCPP=$TOOLCHAIN/usr/bin/clang++
+	
+			export LD=$TOOLCHAIN/usr/bin/ld
+			export AR=$TOOLCHAIN/usr/bin/ar
+			export AS=$TOOLCHAIN/usr/bin/as
+			export NM=$TOOLCHAIN/usr/bin/nm
+			export RANLIB=$TOOLCHAIN/usr/bin/ranlib
+			export LIBTOOL=$TOOLCHAIN/usr/bin/libtool
+
+            echo "Building $IOS_ARCH "
+
+			export PLATFORM=""
+>>>>>>> master
 			if [[ "${IOS_ARCH}" == "i386" || "${IOS_ARCH}" == "x86_64" ]];
 			then
 				PLATFORM="iPhoneSimulator"
@@ -103,7 +164,11 @@ function prepare() {
 			fi
 
 			export CROSS_TOP="${DEVELOPER}/Platforms/${PLATFORM}.platform/Developer"
+<<<<<<< HEAD
 			export CROSS_SDK="${PLATFORM}${SDKVERSION}.sdk"
+=======
+			export CROSS_SDK="${PLATFORM}.sdk"
+>>>>>>> master
 			export BUILD_TOOLS="${DEVELOPER}"
 
            
@@ -121,6 +186,7 @@ function prepare() {
 		    	MIN_TYPE=-mios-simulator-version-min=
 		    fi
 
+<<<<<<< HEAD
 			export EXTRA_PLATFORM_CFLAGS="$EXTRA_PLATFORM_CFLAGS"
 		    export EXTRA_PLATFORM_LDFLAGS="$EXTRA_PLATFORM_LDFLAGS -isysroot ${CROSS_TOP}/SDKs/${CROSS_SDK} -Wl,-dead_strip -I${CROSS_TOP}/SDKs/${CROSS_SDK}/usr/include/ $MIN_TYPE$MIN_IOS_VERSION "
 
@@ -134,26 +200,89 @@ function prepare() {
             export CFLAGS="$EXTRA_FLAGS"
             export CPPFLAGS="$EXTRA_FLAGS"
             export CXXFLAGS="$EXTRA_FLAGS"
+=======
+			export EXTRA_PLATFORM_CFLAGS="$"
+		    export EXTRA_PLATFORM_LDFLAGS="$ -L${CROSS_TOP}/SDKs/$CROSS_SDK/usr/lib/"
+
+		    echo $EXTRA_PLATFORM_LDFLAGS
+
+		    EXTRA_LINK_FLAGS="-arch $IOS_ARCH -stdlib=libc++ -Os -DHAVE_UNISTD_H=1 -DNDEBUG -fPIC "
+			EXTRA_FLAGS="$EXTRA_LINK_FLAGS -pipe -no-cpp-precomp -funroll-loops $MIN_TYPE$MIN_IOS_VERSION -isysroot ${CROSS_TOP}/SDKs/${CROSS_SDK} -I${CROSS_TOP}/SDKs/${CROSS_SDK}/usr/include/"
+
+			unset CFLAGS LDFLAGS CPPFLAGS CXXFLAGS DEVROOT SDKROOT
+          
+            export LDFLAGS="$EXTRA_LINK_FLAGS $EXTRA_PLATFORM_LDFLAGS -std=c++11"
+            export DEVROOT="$CROSS_TOP"
+            export SDKROOT="$CROSS_SDK"
+            export CFLAGS="$EXTRA_FLAGS -std=c11"
+            export CPPFLAGS="$EXTRA_FLAGS -std=c++11"
+            export CXXFLAGS="$EXTRA_FLAGS -std=c++11"
+>>>>>>> master
 
             #echo " out c_flags are $OUR_CFLAGS "
+            rm -f CMakeCache.txt
+            cmake -G 'Unix Makefiles' -DCMAKE_TOOLCHAIN_FILE=./port/iOS/IPHONEOS_$(echo $IOS_ARCH | tr '[:lower:]' '[:upper:]')_TOOLCHAIN.cmake -DASSIMP_ENABLE_BOOST_WORKAROUND=1 -DASSIMP_BUILD_STATIC_LIB=1 -DBUILD_SHARED_LIBS=0 -DCMAKE_C_FLAGS="$EXTRA_FLAGS" -DCMAKE_CXX_FLAGS="$EXTRA_FLAGS" -DCMAKE_CXX_FLAGS="$EXTRA_FLAGS".
 
+            $XCODE_DEV_ROOT/usr/bin/make clean
+
+<<<<<<< HEAD
             cmake -G 'Unix Makefiles' $buildOpts -DCMAKE_C_FLAGS="$EXTRA_FLAGS" -DCMAKE_CXX_FLAGS="$EXTRA_FLAGS" -DCMAKE_CXX_FLAGS="$EXTRA_FLAGS".
 
             make clean
             make assimp -j 8 -l
+=======
+			echo "--------------------"
+		    echo "Running make for ${IOS_ARCH}"
+			echo "Please stand by..."
 
-            fileToRenameTo="./lib/libassimp-$TYPE-$curArch.a"
+            $XCODE_DEV_ROOT/usr/bin/make assimp -j 8 -l
+>>>>>>> master
+
+            fileToRenameTo="./builddir/$TYPE/libassimp-$IOS_ARCH.a"
 
             mv ./lib/libassimp.a $fileToRenameTo
 
             libsToLink="$libsToLink $fileToRenameTo"
 
+<<<<<<< HEAD
             make clean
+=======
+            $XCODE_DEV_ROOT/usr/bin/make clean
+
+            echo "--------------------"
+>>>>>>> master
 
         done
 
+        mkdir -p "lib/$TYPE"
 		# link into universal lib
-		command="lipo -create $libsToLink -o lib/libassimp-ios.a"
+		command="lipo -create $libsToLink -o lib/$TYPE/libassimp.a"
+
+		echo "--------------------"
+		echo "Stripping any lingering symbols"
+
+		set -e
+		CURRENTPATH=`pwd`
+
+		cd lib/$TYPE
+		SLOG="$CURRENTPATH/lib/$TYPE-stripping.log"
+		local TOBESTRIPPED
+		for TOBESTRIPPED in $( ls -1) ; do
+			strip -x $TOBESTRIPPED >> "${SLOG}" 2>&1
+			if [ $? != 0 ];
+		    then
+		    	echo "Problem while stripping lib - Please check ${SLOG}"
+		    	exit 1
+		    else
+		    	echo "Strip Successful for ${SLOG}"
+		    fi
+		done
+
+		cd ../../
+		echo "--------------------"
+
+		echo "Completed."
+
         $command || true
 	fi
 
@@ -232,7 +361,7 @@ function copy() {
 	elif [ "$TYPE" == "osx" ] ; then
 		cp -Rv lib/libassimp-osx.a $1/lib/$TYPE/assimp.a
 	elif [ "$TYPE" == "ios" ] ; then
-		cp -Rv lib/libassimp-ios.a $1/lib/$TYPE/assimp.a
+		cp -Rv lib/$TYPE/libassimp.a $1/lib/$TYPE/assimp.a
 	else
 		cp -Rv lib/libassimp.a $1/lib/$TYPE/assimp.a
 	fi
@@ -249,6 +378,7 @@ function clean() {
 
 	else
 		make clean
+		make rebuild_cache
 		rm -f CMakeCache.txt
 	fi
 }
