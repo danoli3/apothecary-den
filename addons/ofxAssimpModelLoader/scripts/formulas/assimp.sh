@@ -42,15 +42,6 @@ function download() {
 # prepare the build environment, executed inside the lib src dir
 function prepare() {
 	echo "Prepare"
-
-	# if [ "$TYPE" == "ios" ] ; then
-
-	# 	# # patch outdated Makefile.osx provided with FreeImage, check if patch was applied first
-	# 	# if patch -p0 -u -N --dry-run --silent < $FORMULA_DIR/assimp.ios.patch 2>/dev/null ; then
-	# 	# 	patch -p0 -u < $FORMULA_DIR/assimp.ios.patch
-	# 	# fi
-
-	# fi
 }
 
 # executed inside the lib src dir
