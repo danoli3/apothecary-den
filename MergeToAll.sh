@@ -64,7 +64,7 @@ else
     echo "Checkout successful for $1"
 fi
 # merge 1 from to 2
-git merge $1 $2
+git merge $1 $2 --no-commit
 if [ $? != 0 ];
 then
     echo "Problem while merging $1 into $2"
