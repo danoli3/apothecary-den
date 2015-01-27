@@ -51,6 +51,12 @@ then
     echo "----------------------"
     exit;
 fi
+COMMITMSG="Automatic commit"
+if [ "$3" == "" ]
+then
+    COMMITMSG="$3"
+fi
+
 echo "========================"
 echo "From Branch:    $1"
 echo "To Merge to Branch:  $2"
@@ -64,7 +70,7 @@ else
     echo "Checkout successful for $1"
 fi
 # merge 1 from to 2
-git merge --commit -m="Automatic commit" --progress $1 $2
+git merge --commit -m "${COMMITMSG}" --progress $1 $2
 if [ $? != 0 ];
 then
     echo "Problem while merging $1 into $2"
@@ -81,24 +87,26 @@ echo "------------------"
 
 # --------------- Edit here
 
-DoMerge "master" "freeimage-ios"
-DoMerge "master" "freetype-ios"
-DoMerge "master" "openssl-ios"
-DoMerge "master" "poco-ios"
-DoMerge "master" "tess2-ios"
-DoMerge "master" "opencv-ios"
-DoMerge "master" "assimp-ios"
+MESSAGE=""
 
-DoMerge "master" "freeimage-osx"
-DoMerge "master" "freetype-osx"
-DoMerge "master" "openssl-osx"
-DoMerge "master" "poco-osx"
-DoMerge "master" "tess2-osx"
-DoMerge "master" "opencv-osx"
-DoMerge "master" "assimp-osx"
+DoMerge "master" "freeimage-ios" MESSAGE
+DoMerge "master" "freetype-ios" MESSAGE
+DoMerge "master" "openssl-ios" MESSAGE
+DoMerge "master" "poco-ios" MESSAGE
+DoMerge "master" "tess2-ios" MESSAGE
+DoMerge "master" "opencv-ios" MESSAGE
+DoMerge "master" "assimp-ios" MESSAGE
 
-DoMerge "master" "glfw-osx"
-DoMerge "master" "glew-osx"
+DoMerge "master" "freeimage-osx" MESSAGE
+DoMerge "master" "freetype-osx" MESSAGE
+DoMerge "master" "openssl-osx" MESSAGE
+DoMerge "master" "poco-osx" MESSAGE
+DoMerge "master" "tess2-osx" MESSAGE
+DoMerge "master" "opencv-osx" MESSAGE
+DoMerge "master" "assimp-osx" MESSAGE
+
+DoMerge "master" "glfw-osx" MESSAGE
+DoMerge "master" "glew-osx" MESSAGE
 
 
 # --------------- <
