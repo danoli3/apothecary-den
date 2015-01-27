@@ -56,27 +56,56 @@ echo "From Branch:    $1"
 echo "To Merge to Branch:  $2"
 
 git checkout $2
+if [ $? != 0 ];
+then
+    echo "Problem while checking out $1"
+    exit 1
+else
+    echo "Checkout successful for $1"
+fi
 # merge 1 from to 2
-git merge $1 $2
+git merge --commit -m="Automatic commit" --progress $1 $2
+if [ $? != 0 ];
+then
+    echo "Problem while merging $1 into $2"
+    exit 1
+else
+    echo "Merge successful for $1 into $2"
+    git checkout master 
+fi
+
+echo "------------------"
 
 
-echo "========================"
 }
 
+# --------------- Edit here
+
 DoMerge "master" "freeimage-ios"
-DoMerge "master" "freeimage-osx"
-
 DoMerge "master" "freetype-ios"
-DoMerge "master" "freetype-osx"
-
 DoMerge "master" "openssl-ios"
-
 DoMerge "master" "poco-ios"
-
 DoMerge "master" "tess2-ios"
-
 DoMerge "master" "opencv-ios"
+DoMerge "master" "assimp-ios"
 
+DoMerge "master" "freeimage-osx"
+DoMerge "master" "freetype-osx"
+DoMerge "master" "openssl-osx"
+DoMerge "master" "poco-osx"
+DoMerge "master" "tess2-osx"
+DoMerge "master" "opencv-osx"
+DoMerge "master" "assimp-osx"
+
+DoMerge "master" "glfw-osx"
+DoMerge "master" "glew-osx"
+
+
+# --------------- <
+
+echo "========================"
+echo "Finished Sucessfully. Pushing to remote"
+git push 
 
 
 
