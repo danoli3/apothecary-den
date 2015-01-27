@@ -74,11 +74,12 @@ else
     git checkout master 
 fi
 
-echo "========================"
+echo "------------------"
 
 
 }
 
+# --------------- Edit here
 
 DoMerge "master" "freeimage-ios"
 DoMerge "master" "freetype-ios"
@@ -96,12 +97,15 @@ DoMerge "master" "tess2-osx"
 DoMerge "master" "opencv-osx"
 DoMerge "master" "assimp-osx"
 
+DoMerge "master" "glfw-osx"
+DoMerge "master" "glew-osx"
 
 
+# --------------- <
 
 echo "========================"
-git checkout master
-
+echo "Finished Sucessfully. Pushing to remote"
+git push 
 
 
 
