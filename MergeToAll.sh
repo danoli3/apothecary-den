@@ -71,10 +71,12 @@ then
     exit 1
 else
     echo "Merge successful for $1 into $2"
+    git checkout master 
 fi
 
-
 echo "========================"
+
+
 }
 
 
