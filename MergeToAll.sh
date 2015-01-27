@@ -88,26 +88,26 @@ echo "------------------"
 
 # --------------- Edit here
 
-MESSAGE="Update All Branches"
+MESSAGE="Update All Branches [skip ci]"
 
-DoMerge "master" "freeimage-ios" MESSAGE
-DoMerge "master" "freetype-ios" MESSAGE
-DoMerge "master" "openssl-ios" MESSAGE
-DoMerge "master" "poco-ios" MESSAGE
-DoMerge "master" "tess2-ios" MESSAGE
-DoMerge "master" "opencv-ios" MESSAGE
-DoMerge "master" "assimp-ios" MESSAGE
+DoMerge "master" "freeimage-ios" "${MESSAGE}"
+DoMerge "master" "freetype-ios" "${MESSAGE}"
+DoMerge "master" "openssl-ios" "${MESSAGE}"
+DoMerge "master" "poco-ios" "${MESSAGE}"
+DoMerge "master" "tess2-ios" "${MESSAGE}"
+DoMerge "master" "opencv-ios" "${MESSAGE}"
+DoMerge "master" "assimp-ios" "${MESSAGE}"
 
-DoMerge "master" "freeimage-osx" MESSAGE
-DoMerge "master" "freetype-osx" MESSAGE
-DoMerge "master" "openssl-osx" MESSAGE
-DoMerge "master" "poco-osx" MESSAGE
-DoMerge "master" "tess2-osx" MESSAGE
-DoMerge "master" "opencv-osx" MESSAGE
-DoMerge "master" "assimp-osx" MESSAGE
+DoMerge "master" "freeimage-osx" "${MESSAGE}"
+DoMerge "master" "freetype-osx" "${MESSAGE}"
+DoMerge "master" "openssl-osx" "${MESSAGE}"
+DoMerge "master" "poco-osx" "${MESSAGE}"
+DoMerge "master" "tess2-osx" "${MESSAGE}"
+DoMerge "master" "opencv-osx" "${MESSAGE}"
+DoMerge "master" "assimp-osx" "${MESSAGE}"
 
-DoMerge "master" "glfw-osx" MESSAGE
-DoMerge "master" "glew-osx" MESSAGE
+DoMerge "master" "glfw-osx" "${MESSAGE}"
+DoMerge "master" "glew-osx" "${MESSAGE}"
 
 
 # --------------- <
