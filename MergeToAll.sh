@@ -87,7 +87,7 @@ echo "------------------"
 
 # --------------- Edit here
 
-MESSAGE=""
+MESSAGE="Update All Branches"
 
 DoMerge "master" "freeimage-ios" MESSAGE
 DoMerge "master" "freetype-ios" MESSAGE
