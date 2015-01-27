@@ -51,10 +51,11 @@ then
     echo "----------------------"
     exit;
 fi
-COMMITMSG="Automatic commit"
+
 if [ "$3" == "" ]
+    COMMITMSG="Automatic commit"
 then
-    COMMITMSG="$3"
+    COMMITMSG="${3}"
 fi
 
 echo "========================"
