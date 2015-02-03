@@ -74,7 +74,8 @@ fi
 if [[ $COMMITMSG == *"$2"* ]]
 then
   echo "Pushing this commit live";
-elif if [[ $COMMITMSG == *"All"* ]]
+elif [[ $COMMITMSG == *"All"* ]]
+then
     echo "All - Pushing this commit live";
 else
     $COMMITMSG = "$COMMITMSG [skip ci]";
