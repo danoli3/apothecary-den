@@ -74,13 +74,13 @@ fi
 if [[ $COMMITMSG == *"$2"* ]]
 then
     echo "Pushing this commit live";
-    FINALMSG = "${COMMITMSG}"
+    FINALMSG="${COMMITMSG}"
 elif [[ $COMMITMSG == *"All"* ]]
 then
     echo "All - Pushing this commit live";
-    FINALMSG = "${COMMITMSG}"
+    FINALMSG="${COMMITMSG}"
 else
-    FINALMSG = "${COMMITMSG} [skip ci]";
+    FINALMSG="${COMMITMSG} [skip ci]";
     echo "Not found in commit message, not updating travis";
 fi
 
