@@ -73,16 +73,18 @@ fi
 
 if [[ $COMMITMSG == *"$2"* ]]
 then
-    echo "Pushing this commit live";
+    echo "Pushing this commit live"
     FINALMSG="${COMMITMSG}"
 elif [[ $COMMITMSG == *"All"* ]]
 then
-    echo "All - Pushing this commit live";
+    echo "All - Pushing this commit live"
     FINALMSG="${COMMITMSG}"
 else
-    FINALMSG="${COMMITMSG} [skip ci]";
-    echo "Not found in commit message, not updating travis";
+    FINALMSG="${COMMITMSG} [skip ci]"
+    echo "Not found in commit message, not updating travis"
 fi
+
+echo "Commit Message: ${FINALMSG}"
 
 # merge 1 from to 2
 git merge --commit -m "${FINALMSG}" --progress $1 $2
@@ -105,7 +107,7 @@ sleep 2
 # --------------- Edit here
 
 #MESSAGE="Update All Branches [skip ci]"
-MESSAGE="Update glew-osx "
+MESSAGE="Update cairo-osx freetype-osx freetype-ios"
 
 DoMerge "master" "freeimage-ios" "${MESSAGE}"
 DoMerge "master" "freetype-ios" "${MESSAGE}"
