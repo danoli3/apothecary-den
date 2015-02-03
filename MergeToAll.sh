@@ -78,7 +78,7 @@ elif [[ $COMMITMSG == *"All"* ]]
 then
     echo "All - Pushing this commit live";
 else
-    $COMMITMSG = "$COMMITMSG [skip ci]";
+    COMMITMSG = "$COMMITMSG [skip ci]";
     echo "Not found in commit message, not updating travis";
 fi
 
