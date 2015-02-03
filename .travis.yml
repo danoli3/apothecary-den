@@ -1,0 +1,6 @@
+language: objective-c
+compiler: clang
+before-script:
+ - ./apothecary -t osx download cairo
+script:
+ - ./apothecary -t osx update cairo
