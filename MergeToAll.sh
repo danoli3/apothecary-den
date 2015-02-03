@@ -70,6 +70,18 @@ then
 else
     echo "Checkout successful for $1"
 fi
+
+if [[ $COMMITMSG == *"$2"* ]]
+then
+  echo "Pushing this commit live";
+elif [[ $COMMITMSG == *"All"* ]]
+then
+    echo "All - Pushing this commit live";
+else
+    $COMMITMSG = "$COMMITMSG [skip ci]";
+    echo "Not found in commit message, not updating travis";
+fi
+
 # merge 1 from to 2
 git merge --commit -m "${COMMITMSG}" --progress $1 $2
 if [ $? != 0 ];
@@ -83,12 +95,15 @@ fi
 
 echo "------------------"
 
+sleep 2
+
 
 }
 
 # --------------- Edit here
 
-MESSAGE="Update All Branches [skip ci]"
+#MESSAGE="Update All Branches [skip ci]"
+MESSAGE="Update glew-osx "
 
 DoMerge "master" "freeimage-ios" "${MESSAGE}"
 DoMerge "master" "freetype-ios" "${MESSAGE}"
