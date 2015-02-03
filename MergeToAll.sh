@@ -73,17 +73,19 @@ fi
 
 if [[ $COMMITMSG == *"$2"* ]]
 then
-  echo "Pushing this commit live";
+    echo "Pushing this commit live";
+    FINALMSG="${COMMITMSG}"
 elif [[ $COMMITMSG == *"All"* ]]
 then
     echo "All - Pushing this commit live";
+    FINALMSG="${COMMITMSG}"
 else
-    COMMITMSG = "$COMMITMSG [skip ci]";
+    FINALMSG="${COMMITMSG} [skip ci]";
     echo "Not found in commit message, not updating travis";
 fi
 
 # merge 1 from to 2
-git merge --commit -m "${COMMITMSG}" --progress $1 $2
+git merge --commit -m "${FINALMSG}" --progress $1 $2
 if [ $? != 0 ];
 then
     echo "Problem while merging $1 into $2"
