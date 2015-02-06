@@ -350,8 +350,8 @@ function copy() {
 	fi	
 
     # Copy License Files
-    mkdir -p $1/license
     rm -rf $1/license #remove any older files if exists
+    mkdir -p $1/license
     cp -v "license-fi.txt" "$1/license/license-fi.txt"
     cp -v "license-gplv2.txt" "$1/license/license-gplv2.txt"
     cp -v "license-gplv3.txt" "$1/license/license-gplv3.txt"
