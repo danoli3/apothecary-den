@@ -369,8 +369,8 @@ function copy() {
 	fi
 
 	# Copy License Files
-	mkdir -p $1/license
 	rm -rf $1/license #remove any older files if exists
+	mkdir -p $1/license
 	cp -v docs/LICENSE.TXT $1/license/LICENSE.TXT
 	cp -v docs/FTL.TXT $1/license/FTL.TXT
 	cp -v docs/GPLv2.TXT $1/license/GPLv2.TXT
