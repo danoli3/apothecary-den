@@ -57,6 +57,8 @@ function copy() {
 	else
 		echoWarning "TODO: $TYPE copy"
 	fi
+
+	echoWarning "TODO: License Copy"
 }
 
 # executed inside the lib src dir
@@ -64,7 +66,6 @@ function clean() {
 	
 	if [ "$TYPE" == "vs" ] ; then
 		echoWarning "TODO: clean vs"
-	
 	elif [ "$TYPE" == "win_cb" ] ; then
 		echoWarning "TODO: clean win_cb"
 	fi
