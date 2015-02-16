@@ -311,14 +311,11 @@ function copy() {
     cp -R $LIB_FOLDER/lib/opencv.a $1/lib/$TYPE/
   fi
 
-<<<<<<< HEAD
-=======
   # copy license files
   rm -rf $1/license # remove any older files if exists
   mkdir -p $1/license
   cp -v LICENSE $1/license/
 
->>>>>>> master
 }
  
 # executed inside the lib src dir
