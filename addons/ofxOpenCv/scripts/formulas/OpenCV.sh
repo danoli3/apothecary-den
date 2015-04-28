@@ -45,8 +45,13 @@ function prepare() {
 }
  
 function build_osx() {
+
+  mkdir -p "$CURRENTPATH/build/$TYPE/"
+  
   
   if [ "$1" == "64" ] ; then
+    LOG="$CURRENTPATH/build/$TYPE/opencv2-x86_64-${VER}.log"
+    set +e
     cmake . -DCMAKE_INSTALL_PREFIX=$LIB_FOLDER64 \
       -DGLFW_BUILD_UNIVERSAL=ON \
       -DCMAKE_OSX_DEPLOYMENT_TARGET=10.7 \
@@ -87,8 +92,20 @@ function build_osx() {
       -DWITH_V4L=OFF \
       -DWITH_PVAPI=OFF \
       -DBUILD_TESTS=OFF \
-      -DBUILD_PERF_TESTS=OFF
+      -DBUILD_PERF_TESTS=OFF >> "${LOG}" 2>&1
+
+      if [ $? != 0 ];
+      then
+        tail -n 10 "${LOG}"
+        echo "Problem while CMAKE - Please check ${LOG}"
+        exit 1
+      else
+        tail -n 10 "${LOG}"
+        echo "CMAKE Successful for x86_64"
+      fi
   elif [ "$1" == "32" ] ; then
+    LOG="$CURRENTPATH/build/$TYPE/opencv2-i386-${VER}.log"
+    set +e
     # NB - using a special BUILD_ROOT_DIR
     cmake . -DCMAKE_INSTALL_PREFIX=$LIB_FOLDER32 \
       -DGLFW_BUILD_UNIVERSAL=ON \
@@ -130,7 +147,17 @@ function build_osx() {
       -DWITH_V4L=OFF \
       -DWITH_PVAPI=OFF \
       -DBUILD_TESTS=OFF \
-      -DBUILD_PERF_TESTS=OFF
+      -DBUILD_PERF_TESTS=OFF >> "${LOG}" 2>&1
+
+      if [ $? != 0 ];
+      then
+        tail -n 10 "${LOG}"
+        echo "Problem while CMAKE - Please check ${LOG}"
+        exit 1
+      else
+        tail -n 10 "${LOG}"
+        echo "CMAKE Successful for i386"
+      fi
   fi
  
   make clean
@@ -333,14 +360,24 @@ function build() {
       -DWITH_V4L=OFF \
       -DWITH_PVAPI=OFF \
       -DBUILD_TESTS=OFF \
-      -DBUILD_PERF_TESTS=OFF
+      -DBUILD_PERF_TESTS=OFF >> "${LOG}" 2>&1
+
+      if [ $? != 0 ];
+      then
+        tail -n 10 "${LOG}"
+        echo "Problem while CMAKE - Please check ${LOG}"
+        exit 1
+      else
+        tail -n 10 "${LOG}"
+        echo "CMAKE Successful for ${IOS_ARCH}"
+      fi
 
     echo "--------------------"
     echo "Running make clean for ${IOS_ARCH}"
     make clean >> "${LOG}" 2>&1
     if [ $? != 0 ];
       then
-        tail -n 100 "${LOG}"
+        tail -n 10 "${LOG}"
         echo "Problem while make clean- Please check ${LOG}"
         exit 1
       else
