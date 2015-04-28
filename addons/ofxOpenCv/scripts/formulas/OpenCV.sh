@@ -48,7 +48,8 @@ function build_osx() {
 
   mkdir -p "$CURRENTPATH/build/$TYPE/"
   
-  
+  echo "--------------------"
+  echo "Running cmake"
   if [ "$1" == "64" ] ; then
     LOG="$CURRENTPATH/build/$TYPE/opencv2-x86_64-${VER}.log"
     set +e
@@ -159,10 +160,45 @@ function build_osx() {
         echo "CMAKE Successful for i386"
       fi
   fi
+
+  echo "--------------------"
+  echo "Running make clean"
  
-  make clean
-  make
-  make install
+  make clean >> "${LOG}" 2>&1
+  if [ $? != 0 ];
+    then
+      tail -n 10 "${LOG}"
+      echo "Problem while make clean- Please check ${LOG}"
+      exit 1
+    else
+      tail -n 10 "${LOG}"
+      echo "Make Clean Successful for ${IOS_ARCH}"
+  fi
+
+  echo "--------------------"
+  echo "Running make"
+  make >> "${LOG}" 2>&1
+  if [ $? != 0 ];
+    then
+      tail -n 10 "${LOG}"
+      echo "Problem while make - Please check ${LOG}"
+      exit 1
+    else
+      tail -n 10 "${LOG}"
+      echo "Make  Successful for ${IOS_ARCH}"
+  fi
+  echo "--------------------"
+  echo "Running make install"
+  make install >> "${LOG}" 2>&1
+    if [ $? != 0 ];
+      then
+        tail -n 10 "${LOG}"
+        echo "Problem while make install - Please check ${LOG}"
+        exit 1
+      else
+        tail -n 10 "${LOG}"
+        echo "Make install Successful for ${IOS_ARCH}"
+    fi
 }
 
 
@@ -387,15 +423,23 @@ function build() {
 
     echo "--------------------"
     echo "Running make for ${IOS_ARCH}"
-    make
-
+    make >> "${LOG}" 2>&1
+    if [ $? != 0 ];
+      then
+        tail -n 10 "${LOG}"
+        echo "Problem while make - Please check ${LOG}"
+        exit 1
+      else
+        tail -n 10 "${LOG}"
+        echo "Make  Successful for ${IOS_ARCH}"
+    fi
 
     echo "--------------------"
     echo "Running make install for ${IOS_ARCH}"
     make install >> "${LOG}" 2>&1
     if [ $? != 0 ];
       then
-        tail -n 100 "${LOG}"
+        tail -n 10 "${LOG}"
         echo "Problem while make install - Please check ${LOG}"
         exit 1
       else
@@ -409,6 +453,7 @@ function build() {
     done
 
     mkdir -p lib/$TYPE
+    echo "--------------------"
     echo "Creating Fat Libs"
     cd build/iOS
     # link into universal lib, strip "lib" from filename
@@ -423,7 +468,7 @@ function build() {
     done
 
     cd ../../
-
+    echo "--------------------"
     echo "Copying includes"
     cp -R "build/$TYPE/x86_64/include/" "lib/include/"
 
