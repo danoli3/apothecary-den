@@ -107,7 +107,7 @@ sleep 2
 # --------------- Edit here
 
 #MESSAGE="Update All Branches [skip ci]"
-MESSAGE="Update opencv-ios opencv-osx freetype-ios freetype-osx glfw-osx "
+MESSAGE="Update opencv-ios opencv-osx poco-ios poco-osx"
 
 DoMerge "master" "freeimage-ios" "${MESSAGE}"
 DoMerge "master" "freetype-ios" "${MESSAGE}"
