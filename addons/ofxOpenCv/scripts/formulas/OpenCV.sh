@@ -46,6 +46,26 @@ function prepare() {
  
 function build_osx() {
 
+  SDKVERSION=`xcrun -sdk iphoneos --show-sdk-version` 
+  set -e
+  CURRENTPATH=`pwd`
+
+  echo "--------------------"
+  echo $CURRENTPATH
+  # Validate environment
+  case $XCODE_DEV_ROOT in  
+       *\ * )
+             echo "Your Xcode path contains whitespaces, which is not supported."
+             exit 1
+            ;;
+  esac
+  case $CURRENTPATH in  
+       *\ * )
+             echo "Your path contains whitespaces, which is not supported by 'make install'."
+             exit 1
+            ;;
+  esac 
+
   mkdir -p "$CURRENTPATH/build/$TYPE/"
   
   echo "--------------------"
