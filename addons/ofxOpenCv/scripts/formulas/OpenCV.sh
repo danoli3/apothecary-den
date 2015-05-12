@@ -76,6 +76,7 @@ function build_osx() {
   echo "Running cmake"
   if [ "$1" == "64" ] ; then
     LOG="$CURRENTPATH/build/$TYPE/opencv2-x86_64-${VER}.log"
+    echo "Log:" >> "${LOG}" 2>&1
     while $isBuilding; do theTail="$(tail -n 1 ${LOG})"; echo $theTail | cut -c -70 ; echo "...";sleep 30; done & # fix for 10 min time out travis
 
     set +e
@@ -133,7 +134,7 @@ function build_osx() {
   elif [ "$1" == "32" ] ; then
     LOG="$CURRENTPATH/build/$TYPE/opencv2-i386-${VER}.log"
     while $isBuilding; do theTail="$(tail -n 1 ${LOG})"; echo $theTail | cut -c -70 ; echo "...";sleep 30; done & # fix for 10 min time out travis
-
+    echo "Log:" >> "${LOG}" 2>&1
     set +e
     # NB - using a special BUILD_ROOT_DIR
     cmake . -DCMAKE_INSTALL_PREFIX=$LIB_FOLDER32 \
@@ -374,6 +375,7 @@ function build() {
 
 
       isBuilding=true;
+      echo "Log:" >> "${LOG}" 2>&1
       while $isBuilding; do theTail="$(tail -n 1 ${LOG})"; echo $theTail | cut -c -70 ; echo "...";sleep 30; done & # fix for 10 min time out travis
 
 
