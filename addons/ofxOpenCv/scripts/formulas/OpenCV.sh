@@ -69,9 +69,15 @@ function build_osx() {
   mkdir -p "$CURRENTPATH/build/$TYPE/"
   
   echo "--------------------"
+
+  isBuilding=true;
+ 
+
   echo "Running cmake"
   if [ "$1" == "64" ] ; then
     LOG="$CURRENTPATH/build/$TYPE/opencv2-x86_64-${VER}.log"
+    while $isBuilding; do theTail="$(tail -n 1 ${LOG})"; echo $theTail | cut -c -70 ; echo "...";sleep 30; done & # fix for 10 min time out travis
+
     set +e
     cmake . -DCMAKE_INSTALL_PREFIX=$LIB_FOLDER64 \
       -DGLFW_BUILD_UNIVERSAL=ON \
@@ -126,6 +132,8 @@ function build_osx() {
       fi
   elif [ "$1" == "32" ] ; then
     LOG="$CURRENTPATH/build/$TYPE/opencv2-i386-${VER}.log"
+    while $isBuilding; do theTail="$(tail -n 1 ${LOG})"; echo $theTail | cut -c -70 ; echo "...";sleep 30; done & # fix for 10 min time out travis
+
     set +e
     # NB - using a special BUILD_ROOT_DIR
     cmake . -DCMAKE_INSTALL_PREFIX=$LIB_FOLDER32 \
@@ -219,6 +227,8 @@ function build_osx() {
         tail -n 10 "${LOG}"
         echo "Make install Successful"
     fi
+
+    isBuilding=false;
 }
 
 
@@ -363,6 +373,11 @@ function build() {
       set +e
 
 
+      isBuilding=true;
+      while $isBuilding; do theTail="$(tail -n 1 ${LOG})"; echo $theTail | cut -c -70 ; echo "...";sleep 30; done & # fix for 10 min time out travis
+
+
+
       cmake . -DCMAKE_INSTALL_PREFIX="$CURRENTPATH/build/$TYPE/$IOS_ARCH" \
       -DIOS=1 \
       -DAPPLE=1 \
@@ -469,6 +484,8 @@ function build() {
 
     rm -f CMakeCache.txt
     unset CROSS_TOP CROSS_SDK BUILD_TOOLS
+    isBuilding=false;
+
 
     done
 
