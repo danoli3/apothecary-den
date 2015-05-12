@@ -192,7 +192,7 @@ function build_osx() {
       exit 1
     else
       tail -n 10 "${LOG}"
-      echo "Make Clean Successful for ${IOS_ARCH}"
+      echo "Make Clean Successful"
   fi
 
   echo "--------------------"
@@ -205,7 +205,7 @@ function build_osx() {
       exit 1
     else
       tail -n 10 "${LOG}"
-      echo "Make  Successful for ${IOS_ARCH}"
+      echo "Make  Successful"
   fi
   echo "--------------------"
   echo "Running make install"
@@ -217,7 +217,7 @@ function build_osx() {
         exit 1
       else
         tail -n 10 "${LOG}"
-        echo "Make install Successful for ${IOS_ARCH}"
+        echo "Make install Successful"
     fi
 }
 
