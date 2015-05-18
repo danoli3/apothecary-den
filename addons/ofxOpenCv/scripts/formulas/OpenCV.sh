@@ -295,6 +295,7 @@ function build() {
 
   if [ "$TYPE" == "ios" ] ; then
 
+    local isBuilding=false
     local LIB_FOLDER_IOS="$BUILD_ROOT_DIR/$TYPE/iOS/OpenCv"
     local LIB_FOLDER_IOS_SIM="$BUILD_ROOT_DIR/$TYPE/iOS_SIMULATOR/OpenCv"
 
@@ -374,7 +375,7 @@ function build() {
       set +e
 
 
-      isBuilding=true;
+      isBuilding=true
       echo "Log:" >> "${LOG}" 2>&1
       while $isBuilding; do theTail="$(tail -n 1 ${LOG})"; echo $theTail | cut -c -70 ; echo "...";sleep 30; done & # fix for 10 min time out travis
 
@@ -490,6 +491,8 @@ function build() {
 
 
     done
+
+    isBuilding=false;
 
     mkdir -p lib/$TYPE
     echo "--------------------"
