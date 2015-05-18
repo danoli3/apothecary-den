@@ -125,10 +125,6 @@ function build() {
 	    fi
 	    echo "--------------------"
 		echo "Running make"
-
-		isBuilding=true;
-		while $isBuilding; do echo "still building..."; tail -n 2 "${LOG}"; sleep 60; done & # fix for 10 min time out travis
-
 		LOG="$CURRENTPATH/build/$TYPE/poco-make-i386-${VER}.log"
 		make >> "${LOG}" 2>&1
 		if [ $? != 0 ];
@@ -140,8 +136,6 @@ function build() {
 	    	tail -n 100 "${LOG}"
 	    	echo "Make Successful"
 	    fi
-
-	    isBuilding=false;
 
 		# 64 bit
 		export POCO_ENABLE_CPP11=1
@@ -318,22 +312,16 @@ function build() {
 		    fi
 		    echo "--------------------"
 		    echo "Running make for ${IOS_ARCH}"
-		    isBuilding=true;
-			while $isBuilding; do theTail="$(tail -n 1 ${LOG})"; echo $theTail | cut -c -70 ; echo "...";sleep 30; done & # fix for 10 min time out travis
-
-
 			make >> "${LOG}" 2>&1
 			if [ $? != 0 ];
 		    then
-		    	tail -n 10 "${LOG}"
+		    	tail -n 100 "${LOG}"
 		    	echo "Problem while make - Please check ${LOG}"
 		    	exit 1
 		    else
-		    	tail -n 3 "${LOG}"
+		    	tail -n 10 "${LOG}"
 		    	echo "Make Successful for ${IOS_ARCH}"
 		    fi
-
-		    isBuilding=false;
 			unset POCO_TARGET_OSARCH IPHONE_SDK_VERSION_MIN OSFLAGS
 			unset CROSS_TOP CROSS_SDK BUILD_TOOLS
 
@@ -363,7 +351,7 @@ function build() {
 			strip -x $TOBESTRIPPED >> "${SLOG}" 2>&1
 			if [ $? != 0 ];
 		    then
-		    	tail -n 10 "${SLOG}"
+		    	tail -n 100 "${SLOG}"
 		    	echo "Problem while stripping lib - Please check ${SLOG}"
 		    	exit 1
 		    else
@@ -517,9 +505,9 @@ function copy() {
 	fi
 
 	# copy license file
-    rm -rf $1/license # remove any older files if exists
-    mkdir -p $1/license
-    cp -v LICENSE $1/license/
+	rm -rf $1/license # remove any older files if exists
+	mkdir -p $1/license
+	cp -v LICENSE $1/license/
 }
 
 # executed inside the lib src dir
