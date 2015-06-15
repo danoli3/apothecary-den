@@ -10,6 +10,7 @@ FORMULA_TYPES=( "osx" "vs" "win_cb" "ios" "android" )
 
 # define the version
 VER=2.5.5
+FVER=255
 
 # tools for git use
 GIT_URL=http://git.savannah.gnu.org/r/freetype/freetype2.git
@@ -84,10 +85,12 @@ function build() {
 		echo "$BUILD_DIR"
 	
 	elif [ "$TYPE" == "vs" ] ; then
-   		make clean
-        # Force config: auto detection is wrong
-        cp -v builds/win32/w32-vcc.mk config.mk
-        make
+		
+		cd builds/windows/vc2010 #this upgrades without issue to vs2015
+		vs-upgrade "freetype.sln"
+		vs-build "freetype.vcxproj" Build "Release|Win32"
+		vs-build "freetype.vcxproj" Build "Release|x64"
+		cd ../../../
 	
 	elif [ "$TYPE" == "win_cb" ] ; then
 		# configure with arch
@@ -294,7 +297,7 @@ function build() {
 		# armv7
 		ABI=armeabi-v7a
 		local BUILD_TO_DIR=$BUILD_DIR/freetype/build/$TYPE/$ABI
-		source ../../formulas/android_configure.sh $ABI
+		source ../../android_configure.sh $ABI
 
 		./configure --prefix=$BUILD_TO_DIR --host armv7a-linux-android --with-harfbuzz=no --enable-static=yes --enable-shared=no 
 		make clean 
@@ -304,7 +307,7 @@ function build() {
 		# x86
 		ABI=x86
 		local BUILD_TO_DIR=$BUILD_DIR/freetype/build/$TYPE/$ABI
-		source ../../formulas/android_configure.sh $ABI
+		source ../../android_configure.sh $ABI
 
 		./configure --prefix=$BUILD_TO_DIR --host x86-linux-android --with-harfbuzz=no --enable-static=yes --enable-shared=no 
 		make clean 
@@ -340,8 +343,10 @@ function copy() {
 	elif [ "$TYPE" == "ios" ] ; then
 		cp -v lib/$TYPE/libfreetype.a $1/lib/$TYPE/freetype.a
 	elif [ "$TYPE" == "vs" ] ; then
-		# cp -v lib/$TYPE/libfreetype.lib $1/lib/$TYPE/libfreetype.lib
-		echoWarning "TODO: copy vs lib"
+		mkdir -p $1/lib/$TYPE/Win32
+		mkdir -p $1/lib/$TYPE/x64		
+		cp -v objs/vc2010/Win32/freetype$FVER.lib $1/lib/$TYPE/Win32/libfreetype.lib
+		cp -v objs/vc2010/x64/freetype$FVER.lib $1/lib/$TYPE/x64/libfreetype.lib
 	elif [ "$TYPE" == "win_cb" ] ; then
 		# cp -v lib/$TYPE/libfreetype.a $1/lib/$TYPE/libfreetype.a
 		echoWarning "TODO: copy win_cb lib"
@@ -362,7 +367,7 @@ function copy() {
 function clean() {
 
 	if [ "$TYPE" == "vs" ] ; then
-		echoWarning "TODO: clean vs"
+		vs-clean "freetype.sln"
 	elif [ "$TYPE" == "android" ] ; then
 		make clean
 		rm -f build/$TYPE
