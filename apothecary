@@ -76,11 +76,12 @@ IOS_SDK_VER=8.1
 IOS_MIN_SDK_VER=5.1
 
 # used when building for vs
-VS_VER=11
+VS_VER=14
+VS_64_BIT_ENV='VC\bin\x86_amd64\vcvarsx86_amd64.bat'
 
-# used when compiling for android
-ANDROID_NDK_ROOT=`cat ../../libs/openFrameworksCompiled/project/android/paths.make | grep NDK_ROOT | sed 's/.*=\(.*\)/\1/'`
-ANDROID_SDK_ROOT=`cat ../../libs/openFrameworksCompiled/project/android/paths.make | grep SDK_ROOT | sed 's/.*=\(.*\)/\1/'`
+# paths to android SDK, etc
+ANDROID_NDK_ROOT=
+ANDROID_SDK_ROOT=
 ANDROID_PLATFORM=android-19
 
 ################################################################################
@@ -206,15 +207,15 @@ examples:
 
 #set -x # run script in debug mode
 
-set -o pipefail  # trace ERR through pipes
-set -o errtrace  # trace ERR through 'time command' and other functions
-set -o nounset   # set -u : exit the script if you try to use an uninitialized variable
-set -o errexit   # set -e : exit the script if any statement returns a non-true return value
+#set -o pipefail  # trace ERR through pipes
+#set -o errtrace  # trace ERR through 'time command' and other functions
+#set -o nounset   # set -u : exit the script if you try to use an uninitialized variable
+#set -o errexit   # set -e : exit the script if any statement returns a non-true return value
 
 # trap the killer signals so that we can exit with a good message
-trap "trapSignal SIGHUP" SIGHUP
-trap "trapSignal SIGINT" SIGINT
-trap "trapSignal SIGTERM" SIGTERM
+#trap "trapSignal SIGHUP" SIGHUP
+#trap "trapSignal SIGINT" SIGINT
+#trap "trapSignal SIGTERM" SIGTERM
 
 trapSignal() {
 	echo
@@ -223,7 +224,7 @@ trapSignal() {
 }
 
 # trap any script errors and exit
-trap "trapError" ERR
+#trap "trapError" ERR
 
 trapError() {
 	echo
@@ -298,7 +299,6 @@ fi
 ################################################################################
 ### FUNCTIONS
 
-
 function installAndroidToolchain() {
 
 	local WD=$(pwd)
@@ -329,7 +329,6 @@ function installAndroidToolchain() {
 	cd $WD
 
 }
-
 
 # check if a given string matches anything in VALID_TYPES,
 # bool result is set to second argument
@@ -494,11 +493,11 @@ function doCommand() {
 					local addonFormula
 					for addonFormula in $( ls -1 $FORMULA_DIR) ; do
 						# is the file in the directory a valid formula extension
-                        if [ -e $FORMULA_DIR -a "${addonFormula##*.}" == "sh" ] ; then
-                            doCommand $shouldSource $cmd $FORMULA_DIR/$addonFormula
-                        else 
-                            echoVerbose "Unknown formula extension '$addonFormula' with extension: ${addonFormula##*.}"
-                        fi
+						if [ -e $FORMULA_DIR -a "${addonFormula##*.}" == "sh" ] ; then
+							doCommand $shouldSource $cmd $FORMULA_DIR/$addonFormula
+						else 
+							echoVerbose "Unknown formula extension '$addonFormula' with extension: ${addonFormula##*.}"
+						fi
 					done
 					
 					# back to default
@@ -788,20 +787,33 @@ function gitclone() {
 # example: vs-build "./tess2.sln" Build Debug
 # http://msdn.microsoft.com/library/vstudio/b20w810z.aspx
 function vs-build() {
-	cmd.exe /c 'call "%VS'${VS_VER}'0COMNTOOLS%vsvars32.bat" && '$VS_BUILD_TOOL' '$1' /'${2:-Build}' '${3:-Release}''
+	if [ $ARCH == 32 ] ; then
+		cmd.exe /c 'call "%VS'${VS_VER}'0COMNTOOLS%vsvars32.bat" && '$VS_BUILD_TOOL' '$1' /'${2:-Build}' "'${3:-Release}'"'
+	elif [ $ARCH == 64 ] ; then
+		cmd.exe /c 'call "%VS'${VS_VER}'0COMNTOOLS%..\..\'${VS_64_BIT_ENV}'" && '$VS_BUILD_TOOL' '$1' /'${2:-Build}' "'${3:-Release}'"'
+	fi
 }
 
 # visual studio upgrader
 # http://msdn.microsoft.com/en-us/library/vstudio/w15a82ay(v=vs.110).aspx
 function vs-upgrade() {
-	cmd.exe /c 'call "%VS'${VS_VER}'0COMNTOOLS%vsvars32.bat" && '$VS_BUILD_TOOL' '$1' /Upgrade'
+	if [ $ARCH == 32 ] ; then
+		cmd.exe /c 'call "%VS'${VS_VER}'0COMNTOOLS%vsvars32.bat" && '$VS_BUILD_TOOL' '$1' /Upgrade'
+	elif [ $ARCH == 64 ] ; then
+		cmd.exe /c 'call "%VS'${VS_VER}'0COMNTOOLS%..\..\'${VS_64_BIT_ENV}'" && '$VS_BUILD_TOOL' '$1' /Upgrade'
+	fi
 }
 
 # visual studio clean
 # http://msdn.microsoft.com/en-us/library/vstudio/w15a82ay(v=vs.110).aspx
 function vs-clean() {
-	cmd.exe /c 'call "%VS'${VS_VER}'0COMNTOOLS%vsvars32.bat" && '$VS_BUILD_TOOL' '$1' /Clean Release'
-	cmd.exe /c 'call "%VS'${VS_VER}'0COMNTOOLS%vsvars32.bat" && '$VS_BUILD_TOOL' '$1' /Clean Debug'
+	if [ $ARCH == 32 ] ; then
+		cmd.exe /c 'call "%VS'${VS_VER}'0COMNTOOLS%vsvars32.bat" && '$VS_BUILD_TOOL' '$1' /Clean Release'
+		cmd.exe /c 'call "%VS'${VS_VER}'0COMNTOOLS%vsvars32.bat" && '$VS_BUILD_TOOL' '$1' /Clean Debug'
+	elif [ $ARCH == 64 ] ; then
+		cmd.exe /c 'call "%VS'${VS_VER}'0COMNTOOLS%..\..\'${VS_64_BIT_ENV}'" && '$VS_BUILD_TOOL' '$1' /Clean Release'
+		cmd.exe /c 'call "%VS'${VS_VER}'0COMNTOOLS%..\..\'${VS_64_BIT_ENV}'" && '$VS_BUILD_TOOL' '$1' /Clean Debug'
+	fi
 }
 
 ################################################################################
@@ -944,6 +956,22 @@ fi
 # dependency & build root dirs
 DEPENDS_FORMULA_DIR=$APOTHECARY_DIR/$REL_FORMULAS_DIR/$DEPENDS_SUBDIR
 BUILD_ROOT_DIR=$BUILD_DIR/$BUILDROOT_SUBDIR
+
+# set for android sdk info
+if [[ "$TYPE" == "android" ]] ; then
+	if [[ -e ../../libs/openFrameworksCompiled/project/android/paths.make ]] ; then
+		ANDROID_NDK_ROOT=`cat ../../libs/openFrameworksCompiled/project/android/paths.make | grep NDK_ROOT | sed 's/.*=\(.*\)/\1/'`
+		ANDROID_SDK_ROOT=`cat ../../libs/openFrameworksCompiled/project/android/paths.make | grep SDK_ROOT | sed 's/.*=\(.*\)/\1/'`
+		echoVerbose "Android NDK root: $ANDROID_NDK_ROOT"
+		echoVerbose "Android SDK root: $ANDROID_SDK_ROOT"
+	else
+		echoError "Targeting android, but can't find the SDK. Missing"
+		echoError "libs/openFrameworksCompiled/project/android/paths.make ..."
+		echoError "See the following for info:"
+		echoError "libs/openFrameworksCompiled/project/android/paths.make.default"
+		exit 1
+	fi
+fi
 
 # handle commands
 echoVerbose "Running: $A_CMD $*"

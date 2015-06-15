@@ -25,6 +25,14 @@ function prepare() {
 	if [ ! -f configure ] ; then
 		./autogen.sh
 	fi
+	if [ "$TYPE" == "vs" ] ; then
+		#need to download this for the vs solution to build
+		if [ ! -e ../zlib ] ; then
+			echoError "libpng needs zlib, please update that formula first"
+		fi
+		CURRENTPATH=`pwd`
+		cp -v $FORMULA_DIR/buildwin.cmd $CURRENTPATH/projects/visualc71
+	fi
 }
 
 # executed inside the lib src dir
@@ -40,26 +48,48 @@ function build() {
 				CFLAGS="-O3 ${FAT_LDFLAGS}" \
 				--prefix=$BUILD_ROOT_DIR \
 				--disable-dependency-tracking
-
+		make clean
+		make
+	elif [ "$TYPE" == "vs" ] ; then
+		if [ $ARCH == 32 ] ; then
+			cd projects/visualc71
+			cmd //c buildwin.cmd Win32
+			#cd ../..
+		elif [ $ARCH == 64 ] ; then
+			cd projects/visualc71
+			cmd //c buildwin.cmd x64
+		fi
+		
 	else
 	./configure LDFLAGS="-arch i386 -arch x86_64" \
 				CFLAGS="-Os -arch i386 -arch x86_64" \
 				--prefix=$BUILD_ROOT_DIR \
 				--disable-dependency-tracking
+		make clean
+		make
 	fi
 
 
-	make clean
-	make
+	
 }
 
 # executed inside the lib src dir, first arg $1 is the dest libs dir root
 function copy() {
-	make install
+	if [ "$TYPE" == "vs" ] ; then
+	    : noop
+	else
+		make install
+	fi
 }
 
 # executed inside the lib src dir
 function clean() {
-	make uninstall
-	make clean
+	if [ "$TYPE" == "vs" ] ; then
+		if [ $ARCH == 32 ] ; then
+			echo "to do clean vs build"
+		fi
+	else
+		make uninstall
+		make clean
+	fi
 }
