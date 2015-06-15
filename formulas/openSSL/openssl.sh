@@ -587,8 +587,8 @@ function copy() {
 	if [ -f $1/include/openssl/opensslconf_osx.h ]; then
         cp $1/include/openssl/opensslconf_osx.h /tmp/
     fi
-	if [ -f $1/include/openssl/opensslconf_ios.h ]; then
-        cp $1/include/openssl/opensslconf_ios.h /tmp/
+	if [ -f lib/include/openssl/opensslconf_ios.h ]; then
+        cp lib/include/openssl/opensslconf_ios.h /tmp/
     fi
 	if [ -f $1/include/openssl/opensslconf_win32.h ]; then
         cp $1/include/openssl/opensslconf_win32.h /tmp/
@@ -692,18 +692,8 @@ function copy() {
     cp -v LICENSE $1/license/
 	
 	
-    # opensslconf.h might be different per platform.
-    # we add a platform suffix and include the correct one from the original
- #   cat > $1/include/openssl/opensslconf.h 
-#if defined( __WIN32__ ) || defined( _WIN32 )
-#   include <openssl/opensslconf_win32.h>
-#elif TARGET_OS_IPHONE_SIMULATOR || TARGET_IPHONE_SIMULATOR || TARGET_OS_IPHONE || TARGET_IPHONE
-#   include <openssl/opensslconf_ios.h>
-#elif defined(__APPLE_CC__)
-#   include <openssl/opensslconf_osx.h>
-#elif defined (__ANDROID__)
-#   include <openssl/opensslconf_android.h>
-#endif
+    # opensslconf.h might be different per platform. Copy custom file
+    cp -v $FORMULA_DIR/opensslconf.h $1/include/openssl/opensslconf.h
 }
 
 # executed inside the lib src dir
