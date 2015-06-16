@@ -6,6 +6,8 @@
 # uses cmake build system
 
 FORMULA_TYPES=( "osx" "win_cb" "ios" "android" "linux" "linux64" "linuxarmv6l" "linuxarmv7l" "emscripten" "vs" )
+FORMULA_DEPENDS=( "boost" )
+FORMULA_DEPENDS_MANUAL=1
 
 # define the version
 COMMIT=55ec3cd78918c42dfb874e01c9745b4daf51091b
@@ -20,7 +22,13 @@ function download() {
 
 # prepare the build environment, executed inside the lib src dir
 function prepare() {
-	: #noop
+	# manually prepare dependencies
+    apothecaryDependencies download
+    apothecaryDependencies prepare
+
+    # Build and copy all dependencies in preparation
+    apothecaryDepend build boost
+    apothecaryDepend copy boost
 }
 
 # executed inside the lib src dir
@@ -61,7 +69,18 @@ function build() {
 			  ..
 		make -j${PARALLEL_MAKE}
 	
-	elif [ "$TYPE" == "emscripten" ]; then
+	elif [ "$TYPE" == "ios" ]; then
+        git apply ../../formulas/uri/uri-remove-tests.patch
+        # cd _build
+        # export BOOST_LIBRARYDIR=${BUILD_DIR}/boost/stage/lib
+        # export BOOST_INCLUDEDIR=${BUILD_DIR}/boost/
+        # cmake -DCMAKE_BUILD_TYPE=Release \
+        #       -DCMAKE_C_FLAGS="-arch i386 -arch x86_64" \
+        #       -DCMAKE_CXX_FLAGS="-arch i386 -arch x86_64" \
+        #       ..
+        # make -j${PARALLEL_MAKE}
+    
+    elif [ "$TYPE" == "emscripten" ]; then
 		export BOOST_LIBRARYDIR=${BUILD_DIR}/boost/stage/lib
 		export BOOST_INCLUDEDIR=${BUILD_DIR}/boost/
 	    git apply ../../formulas/uri/uri-emscripten.patch
@@ -122,11 +141,16 @@ function copy() {
 			cp -v build_vs64/src/Debug/network-uri.lib $1/lib/$TYPE/x64/network-uri_debug.lib
 		fi
 		
-	elif [ "$TYPE" == "osx" ] || [ "$TYPE" == "ios" ]; then
+	elif [ "$TYPE" == "osx" ]; then
 		cp _build/src/*.a $1/lib/$TYPE/
 		cp -r src/network $1/include/
 		../boost/dist/bin/bcp --scan --boost=../boost $(find src/network/ -name "*.hpp") install_dir
 		rsync -ar install_dir/boost/* $1/../boost/include/boost/
+    elif[ "$TYPE" == "ios" ]; then
+        # cp _build/src/*.a $1/lib/$TYPE/
+        # cp -r src/network $1/include/
+        # ../boost/dist/bin/bcp --scan --boost=../boost $(find src/network/ -name "*.hpp") install_dir
+        # rsync -ar install_dir/boost/* $1/../boost/include/boost/
 	elif [ "$TYPE" == "emscripten" ]; then
         cp _build/src/*.a $1/lib/$TYPE/
         cp -r src/network $1/include/
