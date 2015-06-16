@@ -107,8 +107,8 @@ sleep 2
 # --------------- Edit here
 
 #MESSAGE="Update All Branches [skip ci]"
-MESSAGE="Update All Branches and test"
-#MESSAGE="Update poco-osx glew-osx glfw-osx tess2-ios tess2-osx rtaudio-osx openssl-ios openssl-osx"
+#MESSAGE="Update All Branches and test"
+MESSAGE="Update boost-osx boost-ios uri-osx uri-ios"
 
 DoMerge "master" "freeimage-ios" "${MESSAGE}"
 DoMerge "master" "freetype-ios" "${MESSAGE}"
@@ -130,6 +130,11 @@ DoMerge "master" "glfw-osx" "${MESSAGE}"
 DoMerge "master" "glew-osx" "${MESSAGE}"
 
 DoMerge "master" "rtaudio-osx" "${MESSAGE}"
+
+DoMerge "master" "boost-osx" "${MESSAGE}"
+DoMerge "master" "boost-ios" "${MESSAGE}"
+DoMerge "master" "uri-osx" "${MESSAGE}"
+DoMerge "master" "uri-ios" "${MESSAGE}"
 
 
 # --------------- <
