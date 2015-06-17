@@ -48,13 +48,15 @@ function prepare() {
 		git reset --hard $SHA
 	fi
 	
-	# manually prepare dependencies
-	apothecaryDependencies download
-	apothecaryDependencies prepare
+	if [ "$TYPE" == "vs" ] ; then
+		# manually prepare dependencies
+		apothecaryDependencies download
+		apothecaryDependencies prepare
 
-	# Build and copy all dependencies in preparation
-	apothecaryDepend build openssl
-	apothecaryDepend copy openssl
+		# Build and copy all dependencies in preparation
+		apothecaryDepend build openssl
+		apothecaryDepend copy openssl
+	fi
 
 	# make backups of the ios config files since we need to edit them
 	if [ "$TYPE" == "ios" ] ; then
