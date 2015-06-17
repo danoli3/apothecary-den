@@ -26,7 +26,7 @@ function download() {
 	rm ${TARBALL}
 
 	if [ "$TYPE" == "ios" ]; then
-		cp -v boost/tools/build/example/user-config.jam tools/build/example/user-config.jam.orig # back this up as we manually patch it
+		cp -v boost/tools/build/example/user-config.jam boost/tools/build/example/user-config.jam.orig # back this up as we manually patch it
 	fi
 }
 
