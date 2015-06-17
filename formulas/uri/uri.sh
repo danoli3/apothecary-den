@@ -193,7 +193,6 @@ function build() {
         cd "libs/$TYPE/"
         echo "Running lipo to create fat lib"
         echo "Please stand by..."
-        #           libfreeimage-armv7s.a \
         lipo -create libnetwork-uri-armv7.a \
                     libnetwork-uri-arm64.a \
                     libnetwork-uri-i386.a \
