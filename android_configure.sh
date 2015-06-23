@@ -1,21 +1,23 @@
 export ABI=$1
 export LIBSPATH=android/$ABI
-export NDK_PLATFORM=android-19
+export NDK_PLATFORM=android-21
 export HOST_PLATFORM=linux-x86_64
-export TOOLCHAIN_VERSION=4.8
+export TOOLCHAIN_VERSION=4.9
 if [ $ABI = armeabi-v7a ] || [ $ABI = armeabi ]; then
     export SYSROOT=${NDK_ROOT}/platforms/${NDK_PLATFORM}/arch-arm
     export ANDROID_PREFIX=arm-linux-androideabi
-    export TOOLCHAIN=$ANDROID_PREFIX-4.8
+    export TOOLCHAIN=$ANDROID_PREFIX-4.9
 elif [ $ABI = x86 ]; then
     export SYSROOT=${NDK_ROOT}/platforms/${NDK_PLATFORM}/arch-x86
     export ANDROID_PREFIX=i686-linux-android
-    export TOOLCHAIN=x86-4.8
+    export TOOLCHAIN=x86-4.9
 fi
-export TOOLCHAIN_PATH=${NDK_ROOT}/toolchains/${TOOLCHAIN}/prebuilt/${HOST_PLATFORM}/bin/
-export CC=${NDK_ROOT}/toolchains/${TOOLCHAIN}/prebuilt/${HOST_PLATFORM}/bin/${ANDROID_PREFIX}-gcc
-export CXX=${NDK_ROOT}/toolchains/${TOOLCHAIN}/prebuilt/${HOST_PLATFORM}/bin/${ANDROID_PREFIX}-g++
-export AR=${NDK_ROOT}/toolchains/${TOOLCHAIN}/prebuilt/${HOST_PLATFORM}/bin/${ANDROID_PREFIX}-ar
+export TOOLCHAIN_PATH=${NDK_ROOT}/toolchains/${TOOLCHAIN}/prebuilt/${HOST_PLATFORM}/bin
+export PATH=${PATH}:${TOOLCHAIN_PATH}
+export CC=${TOOLCHAIN_PATH}/${ANDROID_PREFIX}-gcc
+export CXX=${TOOLCHAIN_PATH}/${ANDROID_PREFIX}-g++
+export AR=${TOOLCHAIN_PATH}/${ANDROID_PREFIX}-ar
+export RANLIB=${TOOLCHAIN_PATH}/${ANDROID_PREFIX}-ranlib
 export CFLAGS="-nostdlib --sysroot=${SYSROOT} -fno-short-enums"
 export CFLAGS="$CFLAGS -I${SYSROOT}/usr/include/ -I${NDK_ROOT}/sources/cxx-stl/gnu-libstdc++/${TOOLCHAIN_VERSION}/include -I${NDK_ROOT}/sources/cxx-stl/gnu-libstdc++/${TOOLCHAIN_VERSION}/libs/${ABI}/include -I${NDK_ROOT}/sources/android/cpufeatures"
 export LDFLAGS="--sysroot=${SYSROOT} -nostdlib -L${NDK_ROOT}/sources/cxx-stl/gnu-libstdc++/${TOOLCHAIN_VERSION}/libs/${ABI} -lz -lsupc++ -llog -ldl -lm -lc -lgnustl_static -lgcc"
@@ -28,5 +30,5 @@ elif [ $ABI = armeabi ]; then
     export LDFLAGS="$LDFLAGS -Wl,--fix-cortex-a8 -shared -Wl,--no-undefined"
 elif [ $ABI = x86 ]; then
     export CFLAGS="$CFLAGS  -march=i686 -msse3 -mstackrealign -mfpmath=sse -fno-stack-protector"
-    export LDFLAGS="$LDFLAGS"
+    export LDFLAGS="$LDFLAGS  -march=i686"
 fi
