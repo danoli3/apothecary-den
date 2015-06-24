@@ -1,6 +1,8 @@
 language: objective-c
 compiler: clang
 before-script:
+ - ./apothecary -t osx download boost
  - ./apothecary -t osx download uri
 script:
+ - ./apothecary -t osx update boost
  - ./apothecary -t osx update uri
