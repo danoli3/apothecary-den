@@ -108,7 +108,7 @@ sleep 2
 
 #MESSAGE="Update All Branches [skip ci]"
 #MESSAGE="Update All Branches and test"
-MESSAGE="Update openssl-ios openssl-osx poco-ios poco-osx opencv-ios opencv-osx rtaudio-osx glfw-osx assimp-ios assimp-osx"
+MESSAGE="Update uri-osx uri-ios"
 
 DoMerge "master" "freeimage-ios" "${MESSAGE}"
 DoMerge "master" "freetype-ios" "${MESSAGE}"
