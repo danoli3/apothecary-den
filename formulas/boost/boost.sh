@@ -13,7 +13,7 @@ VERSION_UNDERSCORES="$(echo "$VERSION" | sed 's/\./_/g')"
 TARBALL="boost_${VERSION_UNDERSCORES}.tar.gz" 
 
 BOOST_LIBS="filesystem system"
-EXTRA_CPPFLAGS="-std=c++11 -stdlib=libc++ -fPIC -DBOOST_SP_USE_SPINLOCK"
+EXTRA_CPPFLAGS="-std=c++11 -stdlib=libc++ -fPIC -DBOOST_SP_USE_SPINLOCK -miphoneos-version-min=$IOS_MIN_SDK_VER"
 
 # tools for git use
 URL=http://sourceforge.net/projects/boost/files/boost/${VERSION}/${TARBALL}/download
@@ -25,6 +25,11 @@ function download() {
 	mv boost_${VERSION_UNDERSCORES} boost
 	rm ${TARBALL}
 
+	if [ "$VERSION" == "1.58.0" ]; then
+                cp -v boost/boost/config/compiler/visualc.hpp boost/boost/config/compiler/visualc.hpp.orig # back this up as we manually patch it
+                cp -v boost/libs/filesystem/src/operations.cpp boost/libs/filesystem/src/operations.cpp.orig # back this up as we manually patch it
+	fi
+
 	if [ "$TYPE" == "ios" ]; then
 		cp -v boost/tools/build/example/user-config.jam boost/tools/build/example/user-config.jam.orig # back this up as we manually patch it
 	fi
@@ -32,6 +37,16 @@ function download() {
 
 # prepare the build environment, executed inside the lib src dir
 function prepare() {
+	if [ "$VERSION" == "1.58.0" ]; then 
+		if patch -p0 -u -N --dry-run --silent < $FORMULA_DIR/operations.cpp.patch_1.58 2>/dev/null ; then
+               	    patch -p0 -u < $FORMULA_DIR/operations.cpp.patch_1.58
+                fi
+                
+		if patch -p0 -u -N --dry-run --silent < $FORMULA_DIR/visualc.hpp.patch_1.58 2>/dev/null ; then
+                    patch -p0 -u < $FORMULA_DIR/visualc.hpp.patch_1.58
+                fi
+	fi
+
 	if [ "$TYPE" == "osx" ] || [ "$TYPE" == "emscripten" ]; then
 		./bootstrap.sh --with-toolset=clang --with-libraries=filesystem
 	elif [ "$TYPE" == "ios" ]; then
@@ -124,11 +139,11 @@ using darwin : ${IPHONE_SDKVERSION}~iphonesim
 EOF
 		# Build the Library with ./b2 /bjam
 		echo "Boost iOS Device Staging"
-		./b2 -j${PARALLEL_MAKE} --toolset=darwin-${IPHONE_SDKVERSION}~iphone cxxflags="-stdlib=libc++" linkflags="-stdlib=libc++" --build-dir=iphone-build  variant=release  -sBOOST_BUILD_USER_CONFIG=$BOOST_SRC/tools/build/example/user-config.jam --stagedir=iphone-build/stage --prefix=$PREFIXDIR architecture=arm target-os=iphone macosx-version=iphone-${IPHONE_SDKVERSION} define=_LITTLE_ENDIAN link=static stage
+		./b2 -j${PARALLEL_MAKE} --toolset=darwin-${IPHONE_SDKVERSION}~iphone cxxflags="-stdlib=libc++ -miphoneos-version-min=$IOS_MIN_SDK_VER" linkflags="-stdlib=libc++" --build-dir=iphone-build  variant=release  -sBOOST_BUILD_USER_CONFIG=$BOOST_SRC/tools/build/example/user-config.jam --stagedir=iphone-build/stage --prefix=$PREFIXDIR architecture=arm target-os=iphone macosx-version=iphone-${IPHONE_SDKVERSION} define=_LITTLE_ENDIAN link=static stage
     	echo "Boost iOS Device Install"
-    	./b2 -j${PARALLEL_MAKE} --toolset=darwin-${IPHONE_SDKVERSION}~iphone cxxflags="-stdlib=libc++" linkflags="-stdlib=libc++" --build-dir=iphone-build  variant=release  -sBOOST_BUILD_USER_CONFIG=$BOOST_SRC/tools/build/example/user-config.jam --stagedir=iphone-build/stage --prefix=$PREFIXDIR architecture=arm target-os=iphone macosx-version=iphone-${IPHONE_SDKVERSION} define=_LITTLE_ENDIAN link=static install
+    	./b2 -j${PARALLEL_MAKE} --toolset=darwin-${IPHONE_SDKVERSION}~iphone cxxflags="-stdlib=libc++ -miphoneos-version-min=$IOS_MIN_SDK_VER" linkflags="-stdlib=libc++" --build-dir=iphone-build  variant=release  -sBOOST_BUILD_USER_CONFIG=$BOOST_SRC/tools/build/example/user-config.jam --stagedir=iphone-build/stage --prefix=$PREFIXDIR architecture=arm target-os=iphone macosx-version=iphone-${IPHONE_SDKVERSION} define=_LITTLE_ENDIAN link=static install
     	echo "Boost iOS Simulator Install"
-    	./b2 -j${PARALLEL_MAKE} --toolset=darwin-${IPHONE_SDKVERSION}~iphonesim cxxflags="-stdlib=libc++" linkflags="-stdlib=libc++" --build-dir=iphonesim-build variant=release -sBOOST_BUILD_USER_CONFIG=$BOOST_SRC/tools/build/example/user-config.jam --stagedir=iphonesim-build/stage architecture=x86 target-os=iphone macosx-version=iphonesim-${IPHONE_SDKVERSION} link=static stage
+    	./b2 -j${PARALLEL_MAKE} --toolset=darwin-${IPHONE_SDKVERSION}~iphonesim cxxflags="-stdlib=libc++ -miphoneos-version-min=$IOS_MIN_SDK_VER" linkflags="-stdlib=libc++" --build-dir=iphonesim-build variant=release -sBOOST_BUILD_USER_CONFIG=$BOOST_SRC/tools/build/example/user-config.jam --stagedir=iphonesim-build/stage architecture=x86 target-os=iphone macosx-version=iphonesim-${IPHONE_SDKVERSION} link=static stage
 		mkdir -p $OUTPUT_DIR_LIB
 		mkdir -p $OUTPUT_DIR_SRC
 		mkdir -p $IOSBUILDDIR/armv7/ $IOSBUILDDIR/arm64/ $IOSBUILDDIR/i386/ $IOSBUILDDIR/x86_64/
