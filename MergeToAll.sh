@@ -107,8 +107,8 @@ sleep 2
 # --------------- Edit here
 
 #MESSAGE="Update All Branches [skip ci]"
-#MESSAGE="Update All Branches and test"
-MESSAGE="Update uri-osx uri-ios"
+MESSAGE="Update All Branches and test"
+#MESSAGE="Update uri-osx uri-ios"
 
 DoMerge "master" "freeimage-ios" "${MESSAGE}"
 DoMerge "master" "freetype-ios" "${MESSAGE}"
