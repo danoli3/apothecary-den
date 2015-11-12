@@ -385,15 +385,8 @@ function build() {
 		    echo "Running make for ${IOS_ARCH}"
 		    echo "${LOG}"
 			make -j${PARALLEL_MAKE} >> "${LOG}" 2>&1
-			if [ $? != 0 ];
-		    then
-		    	tail -n 100 "${LOG}"
-		    	echo "Problem while make - Please check ${LOG}"
-		    	exit 1
-		    else
-		    	tail -n 10 "${LOG}"
-		    	echo "Make Successful for ${IOS_ARCH}"
-		    fi
+			tail -n 100 "${LOG}"
+		    	
 			unset POCO_TARGET_OSARCH IPHONE_SDK_VERSION_MIN OSFLAGS
 			unset CROSS_TOP CROSS_SDK BUILD_TOOLS
 
