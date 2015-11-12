@@ -190,15 +190,7 @@ function build() {
 		echo "Running make"
 		LOG="$CURRENTPATH/build/$TYPE/poco-make-x86_64-${VER}.log"
 		make -j${PARALLEL_MAKE} >> "${LOG}" 2>&1
-		if [ $? != 0 ];
-		then
-			tail -n 100 "${LOG}"
-	    	echo "Problem while make - Please check ${LOG}"
-	    	exit 1
-	    else
-	    	tail -n 100 "${LOG}"
-	    	echo "Make Successful"
-	    fi
+		tail -n 100 "${LOG}"
 
 		unset POCO_ENABLE_CPP11
 
@@ -384,9 +376,27 @@ function build() {
 		    echo "--------------------"
 		    echo "Running make for ${IOS_ARCH}"
 		    echo "${LOG}"
-			make -j${PARALLEL_MAKE} >> "${LOG}" 2>&1
-			tail -n 100 "${LOG}"
-		    	
+
+		    export BUILD_OUTPUT=$LOG
+		    export PING_SLEEP=30s
+		    export PING_LOOP_PID
+		    trap 'error_handler' ERR
+		    bash -c "while true; do echo \$(date) - Building Poco ...; sleep $PING_SLEEP; done" &
+PING_LOOP_PID=$!
+
+
+			make -j${PARALLEL_MAKE} >> "${BUILD_OUTPUT}" 2>&1
+			dump_output
+			kill $PING_LOOP_PID
+			if [ $? != 0 ];
+		    then
+		    	tail -n 100 "${LOG}"
+		    	echo "Problem while make - Please check ${LOG}"
+		    	exit 1
+		    else
+		    	tail -n 10 "${LOG}"
+		    	echo "Make Successful for ${IOS_ARCH}"
+		    fi
 			unset POCO_TARGET_OSARCH IPHONE_SDK_VERSION_MIN OSFLAGS
 			unset CROSS_TOP CROSS_SDK BUILD_TOOLS
 
