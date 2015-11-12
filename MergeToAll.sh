@@ -107,7 +107,7 @@ sleep 2
 # --------------- Edit here
 
 #MESSAGE="Update All Branches [skip ci]"
-MESSAGE="Update All Branches and test"
+MESSAGE="Update All Branches post 0.9"
 #MESSAGE="Update uri-osx uri-ios"
 
 DoMerge "master" "freeimage-ios" "${MESSAGE}"
@@ -117,6 +117,13 @@ DoMerge "master" "poco-ios" "${MESSAGE}"
 DoMerge "master" "tess2-ios" "${MESSAGE}"
 DoMerge "master" "opencv-ios" "${MESSAGE}"
 DoMerge "master" "assimp-ios" "${MESSAGE}"
+
+DoMerge "master" "freeimage-tvos" "${MESSAGE}"
+DoMerge "master" "freetype-tvos" "${MESSAGE}"
+DoMerge "master" "openssl-tvos" "${MESSAGE}"
+DoMerge "master" "poco-tvos" "${MESSAGE}"
+DoMerge "master" "tess2-tvos" "${MESSAGE}"
+DoMerge "master" "assimp-tvos" "${MESSAGE}"
 
 DoMerge "master" "freeimage-osx" "${MESSAGE}"
 DoMerge "master" "freetype-osx" "${MESSAGE}"
@@ -133,6 +140,7 @@ DoMerge "master" "rtaudio-osx" "${MESSAGE}"
 
 DoMerge "master" "boost-osx" "${MESSAGE}"
 DoMerge "master" "boost-ios" "${MESSAGE}"
+DoMerge "master" "boost-tvos" "${MESSAGE}"
 DoMerge "master" "uri-osx" "${MESSAGE}"
 DoMerge "master" "uri-ios" "${MESSAGE}"
 
