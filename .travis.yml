@@ -1,0 +1,6 @@
+language: objective-c
+compiler: clang
+before-script:
+ - ./apothecary -t tvos download freeimage
+script:
+ - ./apothecary -t tvos update freeimage
