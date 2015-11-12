@@ -2,6 +2,7 @@ language: objective-c
 osx_image: xcode7.1
 compiler: clang
 before-script:
+ - brew install cmake
  - ./apothecary -t tvos download tess2
 script:
  - ./apothecary -t tvos update tess2
