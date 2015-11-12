@@ -14,7 +14,7 @@ GIT_URL=
 # GIT_URL=https://github.com/assimp/assimp.git
 GIT_TAG=
 
-FORMULA_TYPES=( "osx" "osx-clang-libc++" "ios" "android" "emscripten" )
+FORMULA_TYPES=( "osx" "ios" "tvos" "android" "emscripten" "vs" )
 
 # download the source code and unpack it into LIB_NAME
 function download() {
@@ -28,11 +28,13 @@ function download() {
     # fix an issue with static libs being disabled - see issue https://github.com/assimp/assimp/issues/271
     # this could be fixed fairly soon - so see if its needed for future releases.
 
-    if [ "$TYPE" == "ios" ] ; then
-
+    if [[ "$TYPE" == "ios" || "$TYPE" == "tvos" ]] ; then
     	echo "iOS"
-
+    elif [ "$TYPE" == "vs" ] ; then
+		#ADDED EXCEPTION, FIX DOESN'T WORK IN VS
+    	echo "VS"
 	else 
+		echo "$TYPE"
 
     	sed -i -e 's/SET ( ASSIMP_BUILD_STATIC_LIB OFF/SET ( ASSIMP_BUILD_STATIC_LIB ON/g' assimp/CMakeLists.txt
     	sed -i -e 's/option ( BUILD_SHARED_LIBS "Build a shared version of the library" ON )/option ( BUILD_SHARED_LIBS "Build a shared version of the library" OFF )/g' assimp/CMakeLists.txt
@@ -50,19 +52,31 @@ function build() {
     rm -f CMakeCache.txt || true
 
     # we don't use the build script for iOS now as it is less reliable than doing it our self
-	if [ "$TYPE" == "ios" ] ; then
+	if [[ "$TYPE" == "ios" || "$TYPE" == "tvos" ]] ; then
 		# ref: http://stackoverflow.com/questions/6691927/how-to-build-assimp-library-for-ios-device-and-simulator-with-boost-library
 
         export TOOLCHAIN=$XCODE_DEV_ROOT/Toolchains/XcodeDefault.xctoolchain
 		export TARGET_IOS
         
-        local IOS_ARCHS="armv7 arm64 i386 x86_64" #armv7s
+        local IOS_ARCHS
+        if [ "${TYPE}" == "tvos" ]; then 
+            IOS_ARCHS="x86_64 arm64"
+        elif [ "$TYPE" == "ios"]; then
+            IOS_ARCHS="i386 x86_64 armv7 arm64" #armv7s
+        fi
+
         local STDLIB="libc++"
         local CURRENTPATH=`pwd`
 
         echo $CURRENTPATH
 
-		SDKVERSION=`xcrun -sdk iphoneos --show-sdk-version`	
+		SDKVERSION=""
+        if [ "${TYPE}" == "tvos" ]; then 
+            SDKVERSION=`xcrun -sdk appletvos --show-sdk-version`
+        elif [ "$TYPE" == "ios"]; then
+            SDKVERSION=`xcrun -sdk iphoneos --show-sdk-version`
+        fi
+
         DEVELOPER=$XCODE_DEV_ROOT
 		TOOLCHAIN=${DEVELOPER}/Toolchains/XcodeDefault.xctoolchain
 		VERSION=$VER
@@ -109,14 +123,20 @@ function build() {
 
             echo "Building $IOS_ARCH "
 
-			export PLATFORM=""
 			if [[ "${IOS_ARCH}" == "i386" || "${IOS_ARCH}" == "x86_64" ]];
-			then
-				PLATFORM="iPhoneSimulator"
-			
-			else
-				PLATFORM="iPhoneOS"
-			fi
+            then
+                if [ "${TYPE}" == "tvos" ]; then 
+                    PLATFORM="AppleTVSimulator"
+                elif [ "$TYPE" == "ios"]; then
+                    PLATFORM="iPhoneSimulator"
+                fi
+            else
+                if [ "${TYPE}" == "tvos" ]; then 
+                    PLATFORM="AppleTVOS"
+                elif [ "$TYPE" == "ios"]; then
+                    PLATFORM="iPhoneOS"
+                fi
+            fi
 
 			export CROSS_TOP="${DEVELOPER}/Platforms/${PLATFORM}.platform/Developer"
 			export CROSS_SDK="${PLATFORM}.sdk"
@@ -124,25 +144,38 @@ function build() {
 
            
             MIN_IOS_VERSION=$IOS_MIN_SDK_VER
-		    # min iOS version for arm64 is iOS 7
-		
-		    if [[ "${IOS_ARCH}" == "arm64" || "${IOS_ARCH}" == "x86_64" ]]; then
-		    	MIN_IOS_VERSION=7.0 # 7.0 as this is the minimum for these architectures
-		    elif [ "${IOS_ARCH}" == "i386" ]; then
-		    	MIN_IOS_VERSION=5.1 # 6.0 to prevent start linking errors
-		    fi
+            # min iOS version for arm64 is iOS 7
+        
+            if [[ "${IOS_ARCH}" == "arm64" || "${IOS_ARCH}" == "x86_64" ]]; then
+                MIN_IOS_VERSION=7.0 # 7.0 as this is the minimum for these architectures
+            elif [ "${IOS_ARCH}" == "i386" ]; then
+                MIN_IOS_VERSION=7.0 # 6.0 to prevent start linking errors
+            fi
 
-		    MIN_TYPE=-miphoneos-version-min=
-		    if [[ "${IOS_ARCH}" == "i386" || "${IOS_ARCH}" == "x86_64" ]]; then
-		    	MIN_TYPE=-mios-simulator-version-min=
-		    fi
+            if [ "${TYPE}" == "tvos" ]; then 
+                MIN_TYPE=-mtvos-version-min=
+                if [[ "${IOS_ARCH}" == "i386" || "${IOS_ARCH}" == "x86_64" ]]; then
+                    MIN_TYPE=-mtvos-simulator-version-min=
+                fi
+            elif [ "$TYPE" == "ios"]; then
+                MIN_TYPE=-miphoneos-version-min=
+                if [[ "${IOS_ARCH}" == "i386" || "${IOS_ARCH}" == "x86_64" ]]; then
+                    MIN_TYPE=-mios-simulator-version-min=
+                fi
+            fi
 
-			export EXTRA_PLATFORM_CFLAGS="$"
-		    export EXTRA_PLATFORM_LDFLAGS="$ -L${CROSS_TOP}/SDKs/$CROSS_SDK/usr/lib/"
+            BITCODE=""
+            if [[ "$TYPE" == "tvos" ]]; then
+                BITCODE=-fembed-bitcode;
+                MIN_IOS_VERSION=9.0
+            fi
+
+			export EXTRA_PLATFORM_CFLAGS=""
+		    export EXTRA_PLATFORM_LDFLAGS=" -L${CROSS_TOP}/SDKs/$CROSS_SDK/usr/lib/"
 
 		    echo $EXTRA_PLATFORM_LDFLAGS
 
-		    EXTRA_LINK_FLAGS="-arch $IOS_ARCH -stdlib=libc++ -Os -DHAVE_UNISTD_H=1 -DNDEBUG -fPIC "
+		    EXTRA_LINK_FLAGS="-arch $IOS_ARCH $BITCODE -DNDEBUG -stdlib=libc++ -Os -DHAVE_UNISTD_H=1 -DNDEBUG -fPIC "
 			EXTRA_FLAGS="$EXTRA_LINK_FLAGS -pipe -no-cpp-precomp -funroll-loops $MIN_TYPE$MIN_IOS_VERSION -isysroot ${CROSS_TOP}/SDKs/${CROSS_SDK} -I${CROSS_TOP}/SDKs/${CROSS_SDK}/usr/include/"
 
 			unset CFLAGS LDFLAGS CPPFLAGS CXXFLAGS DEVROOT SDKROOT
@@ -187,12 +220,19 @@ function build() {
         SDKVERSION=`xcrun -sdk iphoneos --show-sdk-version` 
         DEVELOPER=$XCODE_DEV_ROOT
         TOOLCHAIN=${DEVELOPER}/Toolchains/XcodeDefault.xctoolchain
+
+        if [[ "${TYPE}" == "tvos" ]] ; then 
+             $TOOLCHAIN/usr/bin/lipo -create libassimp-arm64.a \
+                        libassimp-x86_64.a \
+                        -output "../../lib/$TYPE/assimp.a" 
+         elif [[ "$TYPE" == "ios" ]]; then
         #           libassimp-armv7s.a \
-        $TOOLCHAIN/usr/bin/lipo -create libassimp-armv7.a \
-                    libassimp-arm64.a \
-                    libassimp-i386.a \
-                    libassimp-x86_64.a \
-                    -output "../../lib/$TYPE/assimp.a" 
+            $TOOLCHAIN/usr/bin/lipo -create libassimp-armv7.a \
+                        libassimp-arm64.a \
+                        libassimp-i386.a \
+                        libassimp-x86_64.a \
+                        -output "../../lib/$TYPE/assimp.a" 
+        fi
 
         cd ../../
 
@@ -212,19 +252,21 @@ function build() {
 		CURRENTPATH=`pwd`
 
 		cd lib/$TYPE
-		SLOG="$CURRENTPATH/lib/$TYPE-stripping.log"
-		local TOBESTRIPPED
-		for TOBESTRIPPED in $( ls -1) ; do
-			$TOOLCHAIN/usr/bin/strip -x $TOBESTRIPPED >> "${SLOG}" 2>&1
-			if [ $? != 0 ];
-		    then
-                tail -n 100 "${LOG}"
-		    	echo "Problem while stripping lib - Please check ${SLOG}"
-		    	exit 1
-		    else
-		    	echo "Strip Successful for ${SLOG}"
-		    fi
-		done
+        if [ "$TYPE" == "ios"]; then
+    		SLOG="$CURRENTPATH/lib/$TYPE-stripping.log"
+    		local TOBESTRIPPED
+    		for TOBESTRIPPED in $( ls -1) ; do
+    			$TOOLCHAIN/usr/bin/strip -x $TOBESTRIPPED >> "${SLOG}" 2>&1
+    			if [ $? != 0 ];
+    		    then
+                    tail -n 100 "${LOG}"
+    		    	echo "Problem while stripping lib - Please check ${SLOG}"
+    		    	exit 1
+    		    else
+    		    	echo "Strip Successful for ${SLOG}"
+    		    fi
+    		done
+        fi
 
 		cd ../../
 		echo "--------------------"
@@ -243,16 +285,40 @@ function build() {
 		make assimp -j${PARALLEL_MAKE}
 
 	elif [ "$TYPE" == "vs" ] ; then
-		echoWarning "TODO: vs build"
+		
+		#architecture selection inspired int he tess formula, shouldn't build both architectures in the same run?
+		echo "building $TYPE | $ARCH | $VS_VER"
+		echo "--------------------"
+		local buildOpts=" -DASSIMP_BUILD_STATIC_LIB=0 -DASSIMP_ENABLE_BOOST_WORKAROUND=1 -DASSIMP_BUILD_ASSIMP_TOOLS=0"
+		local generatorName="Visual Studio "
+		generatorName+=$VS_VER
+		if [ $ARCH == 32 ] ; then
+			mkdir -p build_vs_32
+			cd build_vs_32
+			cmake .. -G "$generatorName" $buildOpts  
+			vs-build "Assimp.sln" build "Release|Win32"
+		elif [ $ARCH == 64 ] ; then
+			mkdir -p build_vs_64
+			cd build_vs_64
+			generatorName+=' Win64'
+			cmake .. -G "$generatorName" $buildOpts  
+			vs-build "Assimp.sln" build "Release|x64"
+		fi
+		cd ..		
+		#cleanup to not fail if the other platform is called
+		rm -f CMakeCache.txt
+		echo "--------------------"
+		echo "Completed Assimp for $TYPE | $ARCH | $VS_VER"
 
-	elif [ "$TYPE" == "win_cb" ] ; then
-		echoWarning "TODO: win_cb build"
+
+	elif [ "$TYPE" == "msys2" ] ; then
+		echoWarning "TODO: msys2 build"
 
 	elif [ "$TYPE" == "android" ] ; then
         
 		# warning, assimp on github uses the ASSIMP_ prefix for CMake options ...
 		# these may need to be updated for a new release
-		local buildOpts="--build build/$TYPE -DASSIMP_BUILD_STATIC_LIB=1 -DASSIMP_BUILD_SHARED_LIB=0 -DASSIMP_ENABLE_BOOST_WORKAROUND=1"
+		local buildOpts="--build build/$TYPE -DASSIMP_BUILD_STATIC_LIB=1 -DASSIMP_BUILD_SHARED_LIB=0 -DASSIMP_ENABLE_BOOST_WORKAROUND=1 -DASSIMP_ENABLE_BOOST_WORKAROUND=1"
 		
 
 		# arm
@@ -299,10 +365,18 @@ function copy() {
 	# libs
 	mkdir -p $1/lib/$TYPE
 	if [ "$TYPE" == "vs" ] ; then
-		cp -Rv lib/libassimp.lib $1/lib/$TYPE/assimp.lib
+		if [ $ARCH == 32 ] ; then
+			mkdir -p $1/lib/$TYPE/Win32
+			cp -v build_vs_32/code/Release/assimp.lib $1/lib/$TYPE/Win32/assimp.lib
+			cp -v build_vs_32/code/Release/assimp.dll ../../../../export/vs/Win32/assimp.dll
+		elif [ $ARCH == 64 ] ; then
+			mkdir -p $1/lib/$TYPE/x64
+			cp -v build_vs_64/code/Release/assimp.lib $1/lib/$TYPE/x64/assimp.lib
+			cp -v build_vs_64/code/Release/assimp.dll ../../../../export/vs/x64/assimp.dll
+		fi
 	elif [ "$TYPE" == "osx" ] ; then
 		cp -Rv lib/libassimp.a $1/lib/$TYPE/assimp.a
-	elif [ "$TYPE" == "ios" ] ; then
+	elif [[ "$TYPE" == "ios" || "$TYPE" == "tvos" ]] ; then
 		cp -Rv lib/$TYPE/assimp.a $1/lib/$TYPE/assimp.a
 	elif [ "$TYPE" == "android" ]; then
     	mkdir -p $1/lib/$TYPE/armeabi-v7a/
@@ -323,9 +397,15 @@ function copy() {
 function clean() {
 
 	if [ "$TYPE" == "vs" ] ; then
-		echoWarning "TODO: clean vs"
+		if [ $ARCH == 32 ] ; then
+			vs-clean "build_vs_32/Assimp.sln";
+		elif [ $ARCH == 64 ] ; then
+			vs-clean "build_vs_64/Assimp.sln";
+		fi
+		rm -f CMakeCache.txt
+		echo "Assimp VS | $TYPE | $ARCH cleaned"
 
-	elif [ "$TYPE" == "vs" ] ; then
+	elif [ "$TYPE" == "android" ] ; then
 		echoWarning "TODO: clean android"
 
 	else
