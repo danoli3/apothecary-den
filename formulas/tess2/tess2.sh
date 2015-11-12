@@ -263,7 +263,7 @@ function build() {
 		echo "-----------------"
 		echo `pwd`
 		echo "Finished for all architectures."
-		mkdir -p "$CURRENTPATH/builddir/$TYPE/$IOS_ARCH"
+		mkdir -p "$CURRENTPATH/builddir/$TYPE/"
 		LOG="$CURRENTPATH/builddir/$TYPE/build-tess2-${VER}-lipo.log"
 
 		mkdir -p "lib/$TYPE"
@@ -343,7 +343,7 @@ function build() {
 function copy() {
 	
 	# headers
-	rm -r $1/include
+	rm -rf $1/include
 	mkdir -p $1/include
 	cp -Rv Include/* $1/include/
 
