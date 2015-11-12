@@ -108,6 +108,7 @@ REL_FORMULAS_DIR=formulas
 REL_BUILD_DIR=build
 REL_LIBS_DIR=libs
 REL_ADDONS_DIR=addons
+CHECKOUT="NO"
 
 # ansi console escape codes
 CON_DEFAULT="\033[0m"
