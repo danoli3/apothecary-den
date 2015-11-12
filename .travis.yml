@@ -1,5 +1,9 @@
 language: objective-c
+osx_image: xcode7.1
 compiler: clang
+before_install:
+ - brew update
+ - brew install cmake
 before-script:
  - ./apothecary -t ios download ofxAssimpModelLoader
 script:
