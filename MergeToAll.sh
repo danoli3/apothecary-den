@@ -140,6 +140,7 @@ DoMerge "master" "rtaudio-osx" "${MESSAGE}"
 
 DoMerge "master" "boost-osx" "${MESSAGE}"
 DoMerge "master" "boost-ios" "${MESSAGE}"
+DoMerge "master" "boost-tvos" "${MESSAGE}"
 DoMerge "master" "uri-osx" "${MESSAGE}"
 DoMerge "master" "uri-ios" "${MESSAGE}"
 
