@@ -672,7 +672,9 @@ function copy() {
 	# opensslconf.h that detects the platform and includes the 
 	# correct one. Then every platform checkouts the rest of the config
 	# files that were deleted here
-	mv include/openssl/opensslconf.h include/openssl/opensslconf_${TYPE}.h
+    if [ -f include/openssl/opensslconf.h]; then
+	   mv include/openssl/opensslconf.h include/openssl/opensslconf_${TYPE}.h
+    fi
     cp -RHv include/openssl/* $1/include/openssl/
     cp -v $FORMULA_DIR/opensslconf.h $1/include/openssl/opensslconf.h
 
