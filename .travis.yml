@@ -2,8 +2,8 @@ language: objective-c
 osx_image: xcode7.1
 compiler: clang
 before_install:
-- wget http://www.cmake.org/files/v2.8/cmake-2.8.12.2-Darwin64-universal.tar.gz && tar xfz cmake-2.8.12.2-Darwin64-universal.tar.gz
-- export PATH="`pwd`/cmake-2.8.12.2-Darwin64-universal/CMake 2.8-12.app/Contents/bin":$PATH:
+ - brew update
+ - brew install cmake
 before-script:
  - ./apothecary -t tvos download ofxAssimpModelLoader
 script:
