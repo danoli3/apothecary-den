@@ -1,0 +1,6 @@
+language: objective-c
+compiler: clang
+before-script:
+ - ./apothecary -t tvos download openssl
+script:
+ - ./apothecary -t tvos update openssl
