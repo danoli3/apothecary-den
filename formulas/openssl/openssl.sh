@@ -683,19 +683,27 @@ function copy() {
 	if [ "$TYPE" == "osx" ] ; then
 		mkdir -p $1/lib/$TYPE
 		cp -v lib/$TYPE/*.a $1/lib/$TYPE
-		git checkout $1/include/openssl/opensslconf_osx.h
-        git checkout $1/include/openssl/opensslconf_ios.h
-    	git checkout $1/include/openssl/opensslconf_android.h
-    	git checkout $1/include/openssl/opensslconf_vs.h
-    	git checkout $1/include/openssl/opensslconf_win32.h
+        if [[ "$CHECKOUT" == "NO" ]]; then 
+            echo "no git checkout"
+        else 
+    		git checkout $1/include/openssl/opensslconf_osx.h
+            git checkout $1/include/openssl/opensslconf_ios.h
+        	git checkout $1/include/openssl/opensslconf_android.h
+        	git checkout $1/include/openssl/opensslconf_vs.h
+        	git checkout $1/include/openssl/opensslconf_win32.h
+        fi
 	elif [[ "$TYPE" == "ios" || "${TYPE}" == "tvos" ]] ; then
 	 	mkdir -p $1/lib/$TYPE
 	 	cp -v lib/$TYPE/*.a $1/lib/$TYPE
-		git checkout $1/include/openssl/opensslconf_osx.h
-        git checkout $1/include/openssl/opensslconf_ios.h
-    	git checkout $1/include/openssl/opensslconf_android.h
-    	git checkout $1/include/openssl/opensslconf_vs.h
-    	git checkout $1/include/openssl/opensslconf_win32.h
+        if [[ "$CHECKOUT" == "NO" ]]; then 
+            echo "no git checkout"
+        else 
+    		git checkout $1/include/openssl/opensslconf_osx.h
+            git checkout $1/include/openssl/opensslconf_ios.h
+        	git checkout $1/include/openssl/opensslconf_android.h
+        	git checkout $1/include/openssl/opensslconf_vs.h
+        	git checkout $1/include/openssl/opensslconf_win32.h
+        fi
 	elif [ "$TYPE" == "vs" ] ; then	 
 		if [ $ARCH == 32 ] ; then
 			rm -rf $1/lib/$TYPE/Win32
