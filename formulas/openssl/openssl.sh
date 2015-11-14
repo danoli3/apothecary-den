@@ -685,13 +685,13 @@ function copy() {
 	# correct one. Then every platform checkouts the rest of the config
 	# files that were deleted here
      if [[ "$TYPE" == "osx" || "$TYPE" == "ios" || "$TYPE" == "tvos" ]] ; then
-        if [ -f lib/include/openssl/opensslconf.h]; then
+        if [ -f lib/include/openssl/opensslconf.h ]; then
             mv lib/include/openssl/opensslconf.h lib/include/openssl/opensslconf_${TYPE}.h
         fi
         cp -RHv lib/include/openssl/* $1/include/openssl/
         cp -v $FORMULA_DIR/opensslconf.h $1/include/openssl/opensslconf.h
 
-    elif [ -f include/openssl/opensslconf.h]; then
+    elif [ -f include/openssl/opensslconf.h ]; then
         mv include/openssl/opensslconf.h include/openssl/opensslconf_${TYPE}.h
         cp -RHv include/openssl/* $1/include/openssl/
         cp -v $FORMULA_DIR/opensslconf.h $1/include/openssl/opensslconf.h
