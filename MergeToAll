@@ -1,5 +1,5 @@
-#!/bin/sh
-
+#! /bin/bash
+#
 # The MIT License (MIT)
 
 # Copyright (c) 2014 Daniel Rosser 
@@ -107,7 +107,7 @@ sleep 2
 # --------------- Edit here
 
 #MESSAGE="Update All Branches [skip ci]"
-MESSAGE="Update poco-tvos poco-ios poco-osx"
+MESSAGE="Update openssl-ios openssl-tvos openssl-osx"
 #MESSAGE="Update uri-osx uri-ios"
 
 DoMerge "master" "freeimage-ios" "${MESSAGE}"
