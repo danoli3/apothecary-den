@@ -107,7 +107,7 @@ sleep 2
 # --------------- Edit here
 
 #MESSAGE="Update All Branches [skip ci]"
-MESSAGE="Update poco-tvos poco-ios"
+MESSAGE="Update poco-tvos poco-ios poco-osx"
 #MESSAGE="Update uri-osx uri-ios"
 
 DoMerge "master" "freeimage-ios" "${MESSAGE}"
