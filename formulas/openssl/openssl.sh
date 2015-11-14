@@ -210,7 +210,7 @@ function build() {
             trap 'error_handler' ERR
             bash -c "while true; do echo \$(date) - Building OpenSSL ...; sleep $PING_SLEEP; done" &
 PING_LOOP_PID=$!
-
+            export COMMAND_MODE=unix2003
             echo "Running make for ${OSX_ARCH}"
             echo "Please stand by..."
             # Must run at -j 1 (single thread only else will fail)
