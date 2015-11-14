@@ -204,12 +204,20 @@ function build() {
                 export LC_CTYPE=$OLD_LC_CTYPE
             fi
 
-			echo "Running make for ${OSX_ARCH}"
-			echo "Please stand by..."
+            export BUILD_OUTPUT=$LOG
+            export PING_SLEEP=30s
+            export PING_LOOP_PID
+            trap 'error_handler' ERR
+            bash -c "while true; do echo \$(date) - Building OpenSSL ...; sleep $PING_SLEEP; done" &
+PING_LOOP_PID=$!
 
-			# Must run at -j 1 (single thread only else will fail)
-			# this is super annoying, but true for OS X, as well as iOS.
-			make -j 1 >> "${LOG}" 2>&1
+            echo "Running make for ${OSX_ARCH}"
+            echo "Please stand by..."
+            # Must run at -j 1 (single thread only else will fail)
+            # this is super annoying, but true for OS X, as well as iOS.
+            make -j 1>> "${BUILD_OUTPUT}" 2>&1
+            dump_output
+            kill $PING_LOOP_PID
 			
 			if [ $? != 0 ];
 		    then 
@@ -535,10 +543,20 @@ function build() {
                 export LC_CTYPE=$OLD_LC_CTYPE
             fi
 
+            export BUILD_OUTPUT=$LOG
+            export PING_SLEEP=30s
+            export PING_LOOP_PID
+            trap 'error_handler' ERR
+            bash -c "while true; do echo \$(date) - Building OpenSSL ...; sleep $PING_SLEEP; done" &
+PING_LOOP_PID=$!
+
 			echo "Running make for ${IOS_ARCH}"
 			echo "Please stand by..."
 			# Must run at -j 1 (single thread only else will fail)
-			make >> "${LOG}" 2>&1
+			make >> "${BUILD_OUTPUT}" 2>&1
+            dump_output
+            kill $PING_LOOP_PID
+
 			if [ $? != 0 ];
 		    then 
                 tail -n 100 "${LOG}"
