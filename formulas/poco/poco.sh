@@ -283,7 +283,7 @@ function build() {
 		local OF_LIBS_OPENSSL_ABS_PATH=$(cd $(dirname $OF_LIBS_OPENSSL); pwd)/$(basename $OF_LIBS_OPENSSL)
 
 		local OPENSSL_INCLUDE=$OF_LIBS_OPENSSL_ABS_PATH/include
-		local OPENSSL_LIBS=$OF_LIBS_OPENSSL_ABS_PATH/lib/ios
+		local OPENSSL_LIBS=$OF_LIBS_OPENSSL_ABS_PATH/lib/$TYPE
 
 		local BUILD_OPTS="--no-tests --no-samples --static --omit=CppUnit,CppUnit/WinTestRunner,Data/MySQL,Data/ODBC,PageCompiler,PageCompiler/File2Page,CppParser,PDF,PocoDoc,ProGen --include-path=$OPENSSL_INCLUDE --library-path=$OPENSSL_LIBS"
 
