@@ -106,8 +106,8 @@ BUILDROOT_SUBDIR=_buildroot
 # paths relative to this script
 REL_FORMULAS_DIR=formulas
 REL_BUILD_DIR=build
-REL_LIBS_DIR=../../libs
-REL_ADDONS_DIR=../../addons
+REL_LIBS_DIR=libs
+REL_ADDONS_DIR=addons
 CHECKOUT=NO
 
 # ansi console escape codes
