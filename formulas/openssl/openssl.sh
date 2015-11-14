@@ -684,12 +684,18 @@ function copy() {
 	# opensslconf.h that detects the platform and includes the 
 	# correct one. Then every platform checkouts the rest of the config
 	# files that were deleted here
-    if [ -f include/openssl/opensslconf.h]; then
-	   mv include/openssl/opensslconf.h include/openssl/opensslconf_${TYPE}.h
-    fi
-    cp -RHv include/openssl/* $1/include/openssl/
-    cp -v $FORMULA_DIR/opensslconf.h $1/include/openssl/opensslconf.h
+     if [[ "$TYPE" == "osx" || "$TYPE" == "ios" || "$TYPE" == "tvos" ]] ; then
+        if [ -f lib/include/openssl/opensslconf.h]; then
+            mv lib/include/openssl/opensslconf.h lib/include/openssl/opensslconf_${TYPE}.h
+        fi
+        cp -RHv lib/include/openssl/* $1/include/openssl/
+        cp -v $FORMULA_DIR/opensslconf.h $1/include/openssl/opensslconf.h
 
+    elif [ -f include/openssl/opensslconf.h]; then
+        mv include/openssl/opensslconf.h include/openssl/opensslconf_${TYPE}.h
+        cp -RHv include/openssl/* $1/include/openssl/
+        cp -v $FORMULA_DIR/opensslconf.h $1/include/openssl/opensslconf.h
+    fi
 	# suppress file not found errors
 	#same here doesn't seem to be a solid reason to delete the files
 	#rm -rf $1/lib/$TYPE/* 2> /dev/null
