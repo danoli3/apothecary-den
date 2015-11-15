@@ -388,6 +388,8 @@ PING_LOOP_PID=$!
 			make -j${PARALLEL_MAKE} >> "${BUILD_OUTPUT}" 2>&1
 			dump_output
 			kill $PING_LOOP_PID
+			trap - ERR
+			
 			if [ $? != 0 ];
 		    then
 		    	tail -n 100 "${LOG}"
