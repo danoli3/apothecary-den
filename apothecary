@@ -931,7 +931,7 @@ function  error_handler() {
 	if [ -z "$PING_LOOP_PID" ]; then
 		echo "Loop PID not set."
 	else 
-		kill $PING_LOOP_PID
+		kill $PING_LOOP_PID || true
 	fi
 	exit 1
 }
