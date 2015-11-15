@@ -231,7 +231,7 @@ PING_LOOP_PID=$!
             make -j 1 >> "${BUILD_OUTPUT}" 2>&1
             dump_output
             kill $PING_LOOP_PID
-			trap - ERR
+			#trap - ERR
             
 			if [ $? != 0 ];
 		    then 
@@ -266,21 +266,19 @@ PING_LOOP_PID=$!
 		lipo -c "build/$TYPE/i386/lib/libssl.a" "build/$TYPE/x86_64/lib/libssl.a" -o "lib/$TYPE/ssl.a"
 
         cd lib/$TYPE
-        if [[ "$TYPE" == "osx" ]]; then
-            SLOG="$CURRENTPATH/lib/$TYPE-stripping.log"
-            local TOBESTRIPPED
-            for TOBESTRIPPED in $( ls -1) ; do
-                strip -x $TOBESTRIPPED >> "${SLOG}" 2>&1
-                if [ $? != 0 ];
-                then
-                    tail -n 100 "${SLOG}"
-                    echo "Problem while stripping lib - Please check ${SLOG}"
-                    exit 1
-                else
-                    echo "Strip Successful for ${SLOG}"
-                fi
-            done
-        fi
+        SLOG="$CURRENTPATH/lib/$TYPE-stripping.log"
+        local TOBESTRIPPED
+        for TOBESTRIPPED in $( ls -1) ; do
+            strip -x $TOBESTRIPPED >> "${SLOG}" 2>&1
+            if [ $? != 0 ];
+            then
+                tail -n 100 "${SLOG}"
+                echo "Problem while stripping lib - Please check ${SLOG}"
+                exit 1
+            else
+                echo "Strip Successful for ${SLOG}"
+            fi
+        done
 
         cd ../../
 		
