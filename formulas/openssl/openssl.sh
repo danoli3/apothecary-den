@@ -231,7 +231,8 @@ PING_LOOP_PID=$!
             make -j 1 >> "${BUILD_OUTPUT}" 2>&1
             dump_output
             kill $PING_LOOP_PID
-			
+			trap - ERR
+            
 			if [ $? != 0 ];
 		    then 
                 tail -n 100 "${LOG}"
@@ -251,7 +252,6 @@ PING_LOOP_PID=$!
 			cp "Makefile.orig" "Makefile"
 
             rm -rf *.a # remove temp lib from main directory
-
 			unset CC CFLAG CFLAGS EXTRAFLAGS
 		done
         unset THECOMPILER
@@ -565,6 +565,7 @@ PING_LOOP_PID=$!
 			make >> "${BUILD_OUTPUT}" 2>&1
             dump_output
             kill $PING_LOOP_PID
+            trap - ERR
 
 			if [ $? != 0 ];
 		    then 
@@ -590,6 +591,8 @@ PING_LOOP_PID=$!
 			cp "Makefile.orig" "Makefile"
 			cp "Configure.orig" "Configure"
             cp "apps/speed.c.orig" "apps/speed.c"
+
+
 
 			unset CC CFLAG CFLAGS EXTRAFLAGS THECOMPILER
 
