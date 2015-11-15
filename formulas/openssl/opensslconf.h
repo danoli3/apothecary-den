@@ -1,3 +1,4 @@
+#include <TargetConditionals.h>
 #if defined(_MSC_VER)
 # include <openssl/opensslconf_vs.h>
 #elif defined( __WIN32__ ) || defined( _WIN32 )
