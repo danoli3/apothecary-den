@@ -281,6 +281,8 @@ PING_LOOP_PID=$!
         done
 
         cd ../../
+
+        echo "Build Finished!"
 		
 		# ------------ END OS X Recipe.
 
