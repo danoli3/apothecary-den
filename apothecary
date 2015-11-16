@@ -925,6 +925,8 @@ function  dump_output() {
 	fi
 }
 function  error_handler() {
+
+
 	echo ERROR: An error was encountered with the build.
 	dump_output
 	# nicely terminate the ping output loop
@@ -933,7 +935,13 @@ function  error_handler() {
 	else 
 		kill $PING_LOOP_PID || true
 	fi
-	exit 1
+
+	JOB="$0"              # job name
+    LASTLINE="$1"         # line of error occurrence
+    LASTERR="$2"          # error code
+    echo "ERROR in ${JOB} : line ${LASTLINE} with exit code ${LASTERR}"
+
+	exit "${LASTERR}"
 }
 
 ################################################################################
