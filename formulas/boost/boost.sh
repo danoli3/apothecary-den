@@ -62,7 +62,7 @@ function prepare() {
 	    echo "Bootstrapping (with libs $BOOST_LIBS_COMMA)"
 	    ./bootstrap.sh --with-libraries=$BOOST_LIBS_COMMA
 	elif [ "$TYPE" == "android" ]; then
-		./bootstrap.sh --with-toolset=gcc --with-libraries=filesystemel
+		./bootstrap.sh --with-toolset=clang --with-libraries=filesystemel
 	elif [ "$TYPE" == "vs" ]; then
 		cmd.exe /c "bootstrap"
 	else
@@ -276,19 +276,13 @@ EOF
 	    cp $FORMULA_DIR/project-config-emscripten.jam project-config.jam
 		./b2 -j${PARALLEL_MAKE} toolset=clang cxxflags="-std=c++11" threading=single variant=release --build-dir=build --stage-dir=stage link=static stage
 	elif [ "$TYPE" == "android" ]; then
-	    rm -rf stage
-	    
-	    ABI=armeabi-v7a
-	    source ../../android_configure.sh $ABI
-	    cp $FORMULA_DIR/project-config-android_arm.jam project-config.jam
-		./b2 -j${PARALLEL_MAKE} toolset=gcc cxxflags="-std=c++11 $CFLAGS" threading=multi threadapi=pthread target-os=android variant=release --build-dir=build_arm link=static stage
-		mv stage stage_arm
-		
-	    ABI=x86
-	    source ../../android_configure.sh $ABI
-	    cp $FORMULA_DIR/project-config-android_x86.jam project-config.jam
-		./b2 -j${PARALLEL_MAKE} toolset=gcc cxxflags="-std=c++11 $CFLAGS" threading=multi threadapi=pthread target-os=android variant=release --build-dir=build_x86 link=static stage
-		mv stage stage_x86
+	    rm -rf stage stage_$ARCH
+        ABI=armeabi-v7a
+        source ../../android_configure.sh $ABI
+        ESCAPED_NDK_ROOT=$(echo ${NDK_ROOT} | sed s/\\//\\\\\\//g)
+        sed "s/\%{NDK_ROOT}/${ESCAPED_NDK_ROOT}/" $FORMULA_DIR/project-config-android_$ARCH.jam > project-config.jam
+	    ./b2 -j${PARALLEL_MAKE} toolset=clang cxxflags="-std=c++11 $CFLAGS" threading=multi threadapi=pthread target-os=android variant=release --build-dir=build_$ARCH link=static stage
+	    mv stage stage_$ARCH
 	fi
 }
 
@@ -333,10 +327,9 @@ function copy() {
 	elif [ "$TYPE" == "emscripten" ]; then
 		cp stage/lib/*.a $1/lib/$TYPE/
 	elif [ "$TYPE" == "android" ]; then
-	    mkdir -p $1/lib/$TYPE/armeabi-v7a
-	    mkdir -p $1/lib/$TYPE/x86
-		cp stage_arm/lib/*.a $1/lib/$TYPE/armeabi-v7a/
-		cp stage_x86/lib/*.a $1/lib/$TYPE/x86/
+	    rm -rf $1/lib/$TYPE/$ABI
+	    mkdir -p $1/lib/$TYPE/$ABI
+		cp stage_$ARCH/lib/*.a $1/lib/$TYPE/$ABI/
 	fi
 
 	# copy license file
