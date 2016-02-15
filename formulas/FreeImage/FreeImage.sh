@@ -58,9 +58,9 @@ function prepare() {
 		# copy across new Makefile for iOS.
 		cp -v $FORMULA_DIR/Makefile.ios Makefile.ios
 	elif [ "$TYPE" == "android" ]; then
-	local BUILD_TO_DIR=$BUILD_DIR/FreeImage_patched
-	cp -r $BUILD_DIR/FreeImage $BUILD_DIR/FreeImage_patched
-	cd $BUILD_DIR/FreeImage_patched
+	    local BUILD_TO_DIR=$BUILD_DIR/FreeImage_patched
+	    cp -r $BUILD_DIR/FreeImage $BUILD_DIR/FreeImage_patched
+	    cd $BUILD_DIR/FreeImage_patched
 	    sed -i "s/#define HAVE_SEARCH_H/\/\/#define HAVE_SEARCH_H/g" Source/LibTIFF4/tif_config.h
 	    cat > Source/LibRawLite/src/swab.h << ENDDELIM
 	    #include <stdint.h>
@@ -324,15 +324,10 @@ function build() {
 		unset TOOLCHAIN
 
 	elif [ "$TYPE" == "android" ] ; then
-        source $LIBS_DIR/openFrameworksCompiled/project/android/paths.make
         local BUILD_TO_DIR=$BUILD_DIR/FreeImage/build/$TYPE
-        rm -rf $BUILD_DIR/FreeImagePatched
-        cp -r $BUILD_DIR/FreeImage $BUILD_DIR/FreeImagePatched
-        cd $BUILD_DIR/FreeImagePatched
+        cd $BUILD_DIR/FreeImage_patched
         
-        # armv7
-        ABI=armeabi-v7a
-        local BUILD_TO_DIR=$BUILD_DIR/FreeImagePatched/build/$TYPE/$ABI
+        local BUILD_TO_DIR=$BUILD_DIR/FreeImage_patched/build/$TYPE/$ABI
         source ../../android_configure.sh $ABI
         export CC="$CC $CFLAGS $LDFLAGS"
         export CXX="$CXX $CFLAGS $LDFLAGS"
@@ -340,19 +335,6 @@ function build() {
         make -j${PARALLEL_MAKE} -f Makefile.gnu libfreeimage.a
         mkdir -p $BUILD_DIR/FreeImage/Dist/$ABI
         mv libfreeimage.a $BUILD_DIR/FreeImage/Dist/$ABI
-        
-        # x86
-        ABI=x86
-        local BUILD_TO_DIR=$BUILD_DIR/FreeImagePatched/build/$TYPE/$ABI
-        source ../../android_configure.sh $ABI
-        export CC="$CC $CFLAGS $LDFLAGS"
-        export CXX="$CXX $CFLAGS $LDFLAGS"
-        make clean -f Makefile.gnu
-        make -j${PARALLEL_MAKE} -f Makefile.gnu libfreeimage.a
-        mkdir -p $BUILD_DIR/FreeImage/Dist/$ABI
-        mv libfreeimage.a $BUILD_DIR/FreeImage/Dist/$ABI
-        cd $BUILD_DIR/FreeImage
-        #rm -r $BUILD_DIR/FreeImage_patched
     elif [ "$TYPE" == "emscripten" ]; then
         local BUILD_TO_DIR=$BUILD_DIR/FreeImage/build/$TYPE
         rm -rf $BUILD_DIR/FreeImagePatched
@@ -414,13 +396,11 @@ function copy() {
 
 	elif [ "$TYPE" == "android" ] ; then
         cp Source/FreeImage.h $1/include
-        if [ -d $1/lib/$TYPE/ ]; then
-            rm -r $1/lib/$TYPE/
+        if [ -d $1/lib/$TYPE/$ABI ]; then
+            rm -r $1/lib/$TYPE/$ABI
         fi
-        mkdir -p $1/lib/$TYPE/armeabi-v7a
-        cp -rv Dist/armeabi-v7a/*.a $1/lib/$TYPE/armeabi-v7a/
-        mkdir -p $1/lib/$TYPE/x86
-        cp -rv Dist/x86/*.a $1/lib/$TYPE/x86/
+        mkdir -p $1/lib/$TYPE/$ABI
+        cp -rv Dist/$ABI/*.a $1/lib/$TYPE/$ABI/
     elif [ "$TYPE" == "emscripten" ]; then
         cp Source/FreeImage.h $1/include
         if [ -d $1/lib/$TYPE/ ]; then
