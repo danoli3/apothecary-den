@@ -5,7 +5,7 @@
 # define the version
 FORMULA_TYPES=( "osx" "vs" "msys2" "ios" "tvos" "android" )
 
-VER=1.0.2d
+VER=1.0.2f
 VERDIR=1.0.2
 CSTANDARD=gnu11 # c89 | c99 | c11 | gnu11
 COMPILER_TYPE=clang # clang, gcc
@@ -477,6 +477,12 @@ PING_LOOP_PID=$!
 
             MIN_IOS_VERSION=$IOS_MIN_SDK_VER
             # min iOS version for arm64 is iOS 7
+        
+            if [[ "${IOS_ARCH}" == "arm64" || "${IOS_ARCH}" == "x86_64" ]]; then
+                MIN_IOS_VERSION=7.0 # 7.0 as this is the minimum for these architectures
+            elif [ "${IOS_ARCH}" == "i386" ]; then
+                MIN_IOS_VERSION=5.1 # 6.0 to prevent start linking errors
+            fi
 
             BITCODE=""
             if [[ "$TYPE" == "tvos" ]]; then
@@ -639,44 +645,37 @@ PING_LOOP_PID=$!
 		unset TOOLCHAIN DEVELOPER
 
 	elif [ "$TYPE" == "android" ]; then
-		source $LIBS_DIR/openFrameworksCompiled/project/android/paths.make
 		perl -pi -e 's/install: all install_docs install_sw/install: install_docs install_sw/g' Makefile.org
 		export _ANDROID_NDK_ROOT=$NDK_ROOT
 		export FIPS_SIG=
-		curl -O http://wiki.openssl.org/images/7/70/Setenv-android.sh
+		unset CXX
+		unset CC
+		unset AR
+		rm -f Setenv-android.sh
+		wget http://wiki.openssl.org/images/7/70/Setenv-android.sh
 		perl -pi -e 's/^_ANDROID_EABI=(.*)$/#_ANDROID_EABI=\1/g' Setenv-android.sh
 		perl -pi -e 's/^_ANDROID_ARCH=(.*)$/#_ANDROID_ARCH=\1/g' Setenv-android.sh
 		perl -pi -e 's/^_ANDROID_API=(.*)$/#_ANDROID_API=\1/g' Setenv-android.sh
 		export _ANDROID_API=$ANDROID_PLATFORM
 		
         # armv7
-        echoInfo "Compiling armv7"
-        export _ANDROID_EABI=arm-linux-androideabi-4.9
-		export _ANDROID_ARCH=arch-arm
-        local BUILD_TO_DIR=$BUILD_DIR/openssl/build/$TYPE/armeabi-v7a
+        if [ "$ARCH" == "armv7" ]; then
+            export _ANDROID_EABI=arm-linux-androideabi-4.9
+		    export _ANDROID_ARCH=arch-arm
+		elif [ "$ARCH" == "x86" ]; then
+            export _ANDROID_EABI=x86-4.9
+		    export _ANDROID_ARCH=arch-x86
+		fi
+		
+        local BUILD_TO_DIR=$BUILD_DIR/openssl/build/$TYPE/$ABI
         mkdir -p $BUILD_TO_DIR
         source Setenv-android.sh
         ./config --openssldir=$BUILD_TO_DIR no-ssl2 no-ssl3 no-comp no-hw no-engine no-shared
         make clean
-        make depend -j${PARALLEL_MAKE}
-        make build_libs -j${PARALLEL_MAKE}
+        make depend 
+        make build_libs 
         mkdir -p $BUILD_TO_DIR/lib
 		cp libssl.a $BUILD_TO_DIR/lib/
-        cp libcrypto.a $BUILD_TO_DIR/lib/
-        
-        # x86
-        echoInfo "Compiling x86"
-        export _ANDROID_EABI=x86-4.9
-		export _ANDROID_ARCH=arch-x86
-        local BUILD_TO_DIR=$BUILD_DIR/openssl/build/$TYPE/x86
-        mkdir -p $BUILD_TO_DIR
-        source Setenv-android.sh
-        ./config --openssldir=$BUILD_TO_DIR no-ssl2 no-ssl3 no-comp no-hw no-engine no-shared
-        make clean
-        make depend -j${PARALLEL_MAKE}
-        make build_libs -j${PARALLEL_MAKE}
-        mkdir -p $BUILD_TO_DIR/lib
-        cp libssl.a $BUILD_TO_DIR/lib/
         cp libcrypto.a $BUILD_TO_DIR/lib/
 
 	else 
@@ -722,27 +721,9 @@ function copy() {
 	if [ "$TYPE" == "osx" ] ; then
 		mkdir -p $1/lib/$TYPE
 		cp -v lib/$TYPE/*.a $1/lib/$TYPE
-        if [[ "$CHECKOUT" == "NO" ]]; then 
-            echo "no git checkout"
-        else 
-    		git checkout $1/include/openssl/opensslconf_osx.h
-            git checkout $1/include/openssl/opensslconf_ios.h
-        	git checkout $1/include/openssl/opensslconf_android.h
-        	git checkout $1/include/openssl/opensslconf_vs.h
-        	git checkout $1/include/openssl/opensslconf_win32.h
-        fi
 	elif [[ "$TYPE" == "ios" || "${TYPE}" == "tvos" ]] ; then
 	 	mkdir -p $1/lib/$TYPE
 	 	cp -v lib/$TYPE/*.a $1/lib/$TYPE
-        if [[ "$CHECKOUT" == "NO" ]]; then 
-            echo "no git checkout"
-        else 
-    		git checkout $1/include/openssl/opensslconf_osx.h
-            git checkout $1/include/openssl/opensslconf_ios.h
-        	git checkout $1/include/openssl/opensslconf_android.h
-        	git checkout $1/include/openssl/opensslconf_vs.h
-        	git checkout $1/include/openssl/opensslconf_win32.h
-        fi
 	elif [ "$TYPE" == "vs" ] ; then	 
 		if [ $ARCH == 32 ] ; then
 			rm -rf $1/lib/$TYPE/Win32
@@ -761,31 +742,17 @@ function copy() {
 				mv -v $f $1/lib/$TYPE/x64/${base}md.lib
 			done
 		fi
-	 	
-		git checkout $1/include/openssl/opensslconf_ios.h
-		git checkout $1/include/openssl/opensslconf_osx.h
-    	git checkout $1/include/openssl/opensslconf_android.h
-    	git checkout $1/include/openssl/opensslconf_win32.h
 	# elif [ "$TYPE" == "msys2" ] ; then
 	# 	mkdir -p $1/lib/$TYPE
 	# 	cp -v lib/MinGW/i686/*.a $1/lib/$TYPE
 	
 	elif [ "$TYPE" == "android" ] ; then
-	    if [ -d $1/lib/$TYPE/ ]; then
-	        rm -r $1/lib/$TYPE/
+	    if [ -d $1/lib/$TYPE/$ABI ]; then
+	        rm -r $1/lib/$TYPE/$ABI
 	    fi
-	    mkdir -p $1/lib/$TYPE/armeabi-v7a
-		cp -rv build/android/armeabi-v7a/lib/*.a $1/lib/$TYPE/armeabi-v7a/
-	    mkdir -p $1/lib/$TYPE/x86
-		cp -rv build/android/x86/lib/*.a $1/lib/$TYPE/x86/
+	    mkdir -p $1/lib/$TYPE/$ABI
+		cp -rv build/android/$ABI/lib/*.a $1/lib/$TYPE/$ABI/
 	    mv include/openssl/opensslconf_android.h include/openssl/opensslconf.h
-
-		git checkout $1/include/openssl/comp.h
-        git checkout $1/include/openssl/engine.h
-		git checkout $1/include/openssl/opensslconf_osx.h
-    	git checkout $1/include/openssl/opensslconf_ios.h
-    	git checkout $1/include/openssl/opensslconf_vs.h
-    	git checkout $1/include/openssl/opensslconf_win32.h
 
 	# 	mkdir -p $1/lib/$TYPE/armeabi-v7a
 	# 	cp -v lib/Android/armeabi-v7a/*.a $1/lib/$TYPE/armeabi-v7a
