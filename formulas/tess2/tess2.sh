@@ -9,7 +9,7 @@
 # on ios, use some build scripts adapted from the Assimp project
 
 # define the version
-FORMULA_TYPES=( "osx" "vs" "emscripten" "ios" "tvos" "android" )
+FORMULA_TYPES=( "osx" "vs" "emscripten" "ios" "tvos" "android" "linux" "linux64" "linuxarmv6l" )
 
 # define the version
 VER=1.1
@@ -36,10 +36,10 @@ function download() {
 
 # prepare the build environment, executed inside the lib src dir
 function prepare() {
-	
+	cp -r . ../tess2_patched
+	cd ../tess2_patched
 	# check if the patch was applied, if not then patch
 	patch -p1 -u -N  < $FORMULA_DIR/tess2.patch
-
 	# copy in build script and CMake toolchains adapted from Assimp
 	if [ "$OS" == "osx" ] ; then
 		mkdir -p build
@@ -49,11 +49,12 @@ function prepare() {
 # executed inside the lib src dir
 function build() {
 	
-	# use CMake for the build using CMakeLists.txt from HomeBrew since the original source doesn't have one
-	# see : https://github.com/mxcl/homebrew/pull/19634/files
-	cp -v $FORMULA_DIR/CMakeLists.txt .
+	cd ../tess2_patched
 	
 	if [ "$TYPE" == "osx" ] ; then
+	    # use CMake for the build using CMakeLists.txt from HomeBrew since the original source doesn't have one
+	    # see : https://github.com/mxcl/homebrew/pull/19634/files
+	    cp -v $FORMULA_DIR/CMakeLists.txt .
 
 		OSX_ARCHS="i386 x86_64" 
 
@@ -108,6 +109,7 @@ function build() {
 			 > "${LOG}" 2>&1
 
 	elif [ "$TYPE" == "vs" ] ; then
+	    cp -v $FORMULA_DIR/CMakeLists.txt .
 		if [ $ARCH == 32 ] ; then
 			mkdir -p build_vs_32
 			cd build_vs_32
@@ -122,7 +124,7 @@ function build() {
 		
 
 	elif [[ "$TYPE" == "ios" || "${TYPE}" == "tvos" ]] ; then
-	
+	    cp -v $FORMULA_DIR/CMakeLists.txt .
 		local IOS_ARCHS
         if [ "${TYPE}" == "tvos" ]; then 
             IOS_ARCHS="x86_64 arm64"
@@ -322,15 +324,39 @@ function build() {
 		unset CROSS_TOP CROSS_SDK BUILD_TOOLS
 
 	elif [ "$TYPE" == "android" ] ; then
-		echoWarning "TODO: android build"
-		
+	    source ../../android_configure.sh $ABI
+	    mkdir -p Build
+	    cd Build
+	    cp -v $FORMULA_DIR/Makefile .
+	    cp -v $FORMULA_DIR/tess2.make .
+	    make config=release tess2 
+	    cd ..
+	    mkdir -p build/android/$ABI
+	    mv Build/libtess2.a build/android/$ABI
 	elif [ "$TYPE" == "emscripten" ] ; then
     	cp -v $FORMULA_DIR/CMakeLists.txt .
     	mkdir -p build
     	cd build
     	emcmake cmake .. -DCMAKE_CXX_FLAGS=-DNDEBUG -DCMAKE_C_FLAGS=-DNDEBUG
     	emmake make -j${PARALLEL_MAKE}
-		
+	elif [ "$TYPE" == "linux64" ] || [ "$TYPE" == "linux" ]; then
+	    mkdir -p Build
+	    cd Build
+	    cp -v $FORMULA_DIR/Makefile .
+	    cp -v $FORMULA_DIR/tess2.make .
+	    make config=release tess2
+	elif [ "$TYPE" == "linuxarmv6l" ]; then
+        if [ $CROSSCOMPILING -eq 1 ]; then
+            source ../../linuxarmv6_configure.sh
+        fi
+	    mkdir -p Build
+	    cd Build
+	    cp -v $FORMULA_DIR/Makefile .
+	    cp -v $FORMULA_DIR/tess2.make .
+	    make config=release tess2
+	    cd ..
+	    mkdir -p build/$TYPE
+	    mv Build/libtess2.a build/$TYPE
 	else
 		mkdir -p build/$TYPE
 		cd build/$TYPE
@@ -342,6 +368,7 @@ function build() {
 # executed inside the lib src dir, first arg $1 is the dest libs dir root
 function copy() {
 	
+	cd ../tess2_patched
 	# headers
 	rm -rf $1/include
 	mkdir -p $1/include
@@ -365,7 +392,16 @@ function copy() {
 
 	elif [ "$TYPE" == "emscripten" ]; then
 		cp -v build/libtess2.a $1/lib/$TYPE/libtess2.a
-		
+
+	elif [ "$TYPE" == "linux64" ]; then
+		cp -v Build/libtess2.a $1/lib/$TYPE/libtess2.a
+
+	elif [ "$TYPE" == "linux" ]; then
+		cp -v Build/libtess2.a $1/lib/$TYPE/libtess2.a
+	elif [ "$TYPE" == "android" ]; then
+	    rm -rf $1/lib/$TYPE/$ABI
+	    mkdir -p $1/lib/$TYPE/$ABI
+		cp -v build/$TYPE/$ABI/libtess2.a $1/lib/$TYPE/$ABI/libtess2.a
 	else
 		cp -v build/$TYPE/libtess2.a $1/lib/$TYPE/libtess2.a
 	fi
