@@ -5,7 +5,7 @@
 # http://sourceforge.net/projects/kissfft/
 #
 # has a Makefile
-FORMULA_TYPES=( "osx" "linux" "linux64" "msys2" "ios" "android" )
+FORMULA_TYPES=( "linux" "linux64" "linuxarmv6" "linuxarmv7" )
 
 # define the version
 VER=130
@@ -25,54 +25,39 @@ function download() {
 
 # prepare the build environment, executed inside the lib src dir
 function prepare() {
-	: # noop
+	cp -Rv $FORMULA_DIR/Makefile .
 }
 
 # executed inside the lib src dir
 function build() {
-
-	if [ "$TYPE" == "linux" ] ; then
-		gcc -I./include -c src/kiss_fft.c -o kiss_fft.o
-		gcc -I./include -c src/kiss_fftr.c -o kiss_fftr.o
-		ar r libkiss.a kiss.o
-		echoWarning "TODO: linux build"
-
-	
-	elif [ "$TYPE" == "linux64" ] ; then
-		echoWarning "TODO: linux64 build"
-	
-	else
-		echo "build not needed for $TYPE"
-	fi
+    if [ $CROSSCOMPILING -eq 1 ]; then
+        export PREFIX=arm-linux-gnueabihf
+        export SYSROOT=$BUILD_DIR/../../scripts/linuxarm/raspbian
+        export TOOLCHAIN_ROOT=$BUILD_DIR/../../scripts/linuxarm/rpi_toolchain
+        source ../../linuxarmv6_configure.sh
+    fi
+    make  -j${PARALLEL_MAKE} TARGET_DIR=$TYPE
 }
 
 # executed inside the lib src dir, first arg $1 is the dest libs dir root
 function copy() {
-
 	# headers
 	mkdir -p $1/include
 	cp -v kiss_fft.h $1/include
 	cp -v tools/kiss_fftr.h $1/include
 
-	# source
-	mkdir -p $1/src
-	cp -v kiss_fft.c $1/src
-	cp -v tools/kiss_fftr.c $1/src
-	cp -v _kiss_fft_guts.h $1/src
+	mkdir -p $1/lib/$TYPE
+	cp -v lib/$TYPE/libkiss.a $1/lib/$TYPE/libkiss.a
 
-	# libs
-	if [ "$TYPE" == "linux" ] ; then
-		mkdir -p $1/lib/linux
-		cp -v libkiss.a $1/lib/linux/libkiss.a
-
-	elif [ "$TYPE" == "linux64" ] ; then
-		mkdir -p $1/lib/linux64
-		cp -v libkiss.a $1/lib/linux64/libkiss.a
-	fi
+	# copy license file
+	rm -rf $1/license # remove any older files if exists
+	mkdir -p $1/license
+	cp -v COPYING $1/license/
 }
 
 # executed inside the lib src dir
 function clean() {
+	
 	if [ "$TYPE" == "linux" -o "$TYPE" == "linux64" ] ; then
 		make clean
 		rm -f *.a
