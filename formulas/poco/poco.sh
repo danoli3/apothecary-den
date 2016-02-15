@@ -8,13 +8,13 @@
 # specify specfic build configs in poco/config using ./configure --config=NAME
 
 # define the version
-VER=1.6.1-release
+VER=1.6.0-release
 
 # tools for git use
 GIT_URL=https://github.com/pocoproject/poco
-GIT_TAG=poco-1.6.1-release
+GIT_TAG=poco-1.6.0-release
 
-FORMULA_TYPES=( "osx" "ios" "tvos" "android" "emscripten" "vs" )
+FORMULA_TYPES=( "osx" "ios" "tvos" "android" "emscripten" "vs" "linux" "linux64" "linuxarmv6l" "linuxarmv7l")
 
 #dependencies
 FORMULA_DEPENDS=( "openssl" )
@@ -27,7 +27,7 @@ FORMULA_DEPENDS_MANUAL=1
 # 3rd Party libraries.  See https://github.com/pocoproject/poco/blob/develop/README
 # for more information.
 
-SHA=f8dee428ab61499753e9b2f81f8a5b9ea1dc74e4
+SHA=
 
 # download the source code and unpack it into LIB_NAME
 function download() {
@@ -50,12 +50,12 @@ function prepare() {
 		git reset --hard $SHA
 	fi
 	
-	if [ "$TYPE" != "msys2" ] && [ "$TYPE" != "linux" ] && [ "$TYPE" != "ios" ] && [ "$TYPE" != "tvos" ]; then
+	if [ "$TYPE" != "msys2" ] && [ "$TYPE" != "linux" ] && [ "$TYPE" != "ios" ] && [ "$TYPE" != "tvos" ] && [ $FORMULA_DEPENDS_MANUAL -ne 1 ]; then
 		# manually prepare dependencies
 		apothecaryDependencies download
 		apothecaryDependencies prepare
 		# Build and copy all dependencies in preparation
-		apothecaryDepend build openssl
+	    apothecaryDepend build openssl
 		apothecaryDepend copy openssl
 	fi
 
@@ -123,110 +123,29 @@ function prepare() {
 		if patch -p0 -u -N --dry-run --silent < $FORMULA_DIR/android.patch 2>/dev/null ; then
 			patch -p0 -u < $FORMULA_DIR/android.patch
 		fi
-		if patch -p0 -u -N --dry-run --silent < $FORMULA_DIR/android.config.patch 2>/dev/null ; then
-			patch -p0 -u < $FORMULA_DIR/android.config.patch
-		fi
-
+		cp $FORMULA_DIR/Android build/config/Android
 	fi
 
 }
 
 # executed inside the lib src dir
 function build() {
-
+    local BUILD_OPTS="--no-tests --no-samples --static --omit=CppUnit,CppUnit/WinTestRunner,Data,Data/SQLite,Data/ODBC,Data/MySQL,PageCompiler,PageCompiler/File2Page,CppParser,PDF,PocoDoc,ProGen,MongoDB"
 	if [ "$TYPE" == "osx" ] ; then
-		local BUILD_OPTS="--no-tests --no-samples --static --omit=CppUnit,CppUnit/WinTestRunner,Data/MySQL,Data/ODBC,PageCompiler,PageCompiler/File2Page,CppParser,PDF,PocoDoc,ProGen"
-
 		CURRENTPATH=`pwd`
-		mkdir -p "$CURRENTPATH/build/$TYPE/LOG"
-		LOG="$CURRENTPATH/build/$TYPE/poco-configure-i386-${VER}.log"
-		set +e
-
 		echo "--------------------"
 		echo "Making Poco-${VER}"
 		echo "--------------------"
-		echo "Configuring for i386 libc++ ..."
+		echo "Configuring for universal i386 and x86_64 libc++ ..."
 
 		# 32 bit
 		# For OS 10.9+ we must explicitly set libstdc++ for the 32-bit OSX build.
-		./configure $BUILD_OPTS --config=Darwin32-clang-libc++ > "${LOG}" 2>&1
-		if [ $? != 0 ];
-		then
-			tail -n 100 "${LOG}"
-	    	echo "Problem while configuring - Please check ${LOG}"
-	    	exit 1
-	    else
-	    	tail -n 100 "${LOG}"
-	    	echo "Configure Successful"
-	    fi
-	    echo "--------------------"
-		echo "Running make"
-		LOG="$CURRENTPATH/build/$TYPE/poco-make-i386-${VER}.log"
-		export BUILD_OUTPUT=$LOG
-	    export PING_SLEEP=30s
-	    export PING_LOOP_PID
-	    trap 'error_handler' ERR
-	    bash -c "while true; do echo \$(date) - Building Poco ...; sleep $PING_SLEEP; done" &
-PING_LOOP_PID=$!
-		make -j${PARALLEL_MAKE} >> "${BUILD_OUTPUT}" 2>&1
-		dump_output
-		kill $PING_LOOP_PID
-		trap - ERR
-		if [ $? != 0 ];
-		then
-			tail -n 100 "${LOG}"
-	    	echo "Problem while make - Please check ${LOG}"
-	    	exit 1
-	    else
-	    	tail -n 100 "${LOG}"
-	    	echo "Make Successful"
-	    fi
-
-		# 64 bit
-		export POCO_ENABLE_CPP11=1
-		LOG="$CURRENTPATH/build/$TYPE/poco-configure-x86_64-${VER}.log"
-		./configure $BUILD_OPTS --config=Darwin64-clang-libc++  > "${LOG}" 2>&1
-		if [ $? != 0 ];
-		then
-			tail -n 100 "${LOG}"
-	    	echo "Problem while configuring - Please check ${LOG}"
-	    	exit 1
-	    else
-	    	tail -n 100 "${LOG}"
-	    	echo "Configure Successful"
-	    fi
-	    echo "--------------------"
-		echo "Running make"
-		LOG="$CURRENTPATH/build/$TYPE/poco-make-x86_64-${VER}.log"
-		export BUILD_OUTPUT=$LOG
-	    export PING_SLEEP=30s
-	    export PING_LOOP_PID
-	    trap 'error_handler' ERR
-	    bash -c "while true; do echo \$(date) - Building Poco ...; sleep $PING_SLEEP; done" &
-PING_LOOP_PID=$!
-
-		make -j${PARALLEL_MAKE} >> "${BUILD_OUTPUT}" 2>&1
-		dump_output
-		kill $PING_LOOP_PID
-		trap - ERR
-
-		unset POCO_ENABLE_CPP11
-
-		cd lib/Darwin
-
-		# delete debug builds
-		rm i386/*d.a
-		rm x86_64/*d.a
-
-		# link into universal lib, strip "lib" from filename
-		local lib
-		for lib in $( ls -1 i386) ; do
-			local renamedLib=$(echo $lib | sed 's|lib||')
-			if [ ! -e $renamedLib ] ; then
-				lipo -c i386/$lib x86_64/$lib -o $renamedLib
-			fi
-		done
-
+		export ARCHFLAGS="-arch i386 -arch x86_64"
+		./configure $BUILD_OPTS --config=Darwin-clang-libc++ \
+		    --prefix=$BUILD_DIR/poco/install/$TYPE
+		make -j${PARALLEL_MAKE}
+		make install
+		rm -f install/$TYPE/lib/*d.a
 	elif [ "$TYPE" == "vs" ] ; then
 		if [ $ARCH == 32 ] ; then
 			cmd //c buildwin.cmd ${VS_VER}0 upgrade static_md both Win32 nosamples notests
@@ -237,7 +156,6 @@ PING_LOOP_PID=$!
 		fi
 	elif [ "$TYPE" == "msys2" ] ; then
 	    cp $FORMULA_DIR/MinGWConfig64 build/config/MinGW
-		local BUILD_OPTS="--no-tests --no-samples --static  --no-sharedlibs --omit=CppUnit,CppUnit/WinTestRunner,Data/MySQL,Data/ODBC,PageCompiler,PageCompiler/File2Page,CppParser,PDF,PocoDoc,ProGen"
 
 		./configure $BUILD_OPTS \
 					--config=MinGW
@@ -303,7 +221,7 @@ PING_LOOP_PID=$!
 		local OPENSSL_INCLUDE=$OF_LIBS_OPENSSL_ABS_PATH/include
 		local OPENSSL_LIBS=$OF_LIBS_OPENSSL_ABS_PATH/lib/$TYPE
 
-		local BUILD_OPTS="--no-tests --no-samples --static --omit=CppUnit,CppUnit/WinTestRunner,Data/MySQL,Data/ODBC,PageCompiler,PageCompiler/File2Page,CppParser,PDF,PocoDoc,ProGen --include-path=$OPENSSL_INCLUDE --library-path=$OPENSSL_LIBS"
+		local BUILD_OPTS="$BUILD_OPTS --include-path=$OPENSSL_INCLUDE --library-path=$OPENSSL_LIBS"
 
 		STATICOPT_CC=-fPIC
 		STATICOPT_CXX=-fPIC
@@ -490,49 +408,48 @@ PING_LOOP_PID=$!
 		echo "Completed."
 
 	elif [ "$TYPE" == "android" ] ; then
-		local BUILD_OPTS="--no-tests --no-samples --static --omit=CppUnit,CppUnit/WinTestRunner,Data/MySQL,Data/ODBC,PageCompiler,PageCompiler/File2Page,CppParser,PDF,PocoDoc,ProGen"
-
 		local OLD_PATH=$PATH
 
-		export PATH=$PATH:$BUILD_DIR/Toolchains/Android/arm/bin:$BUILD_DIR/Toolchains/Android/x86/bin
+		export PATH=$BUILD_DIR/Toolchains/Android/$ARCH/bin:$OLD_PATH
 
 		local OF_LIBS_OPENSSL="$LIBS_DIR/openssl/"
 
 		# get the absolute path to the included openssl libs
 		local OF_LIBS_OPENSSL_ABS_PATH=$(cd $(dirname $OF_LIBS_OPENSSL); pwd)/$(basename $OF_LIBS_OPENSSL)
-
 		local OPENSSL_INCLUDE=$OF_LIBS_OPENSSL_ABS_PATH/include
 		local OPENSSL_LIBS=$OF_LIBS_OPENSSL_ABS_PATH/lib/
 
-		local BUILD_OPTS="--no-tests --no-samples --static --omit=CppUnit,CppUnit/WinTestRunner,Data/MySQL,Data/ODBC,PageCompiler,PageCompiler/File2Page,CppParser,PDF,PocoDoc,ProGen"
-
+        export CXX=clang++
 		./configure $BUILD_OPTS \
 					--include-path=$OPENSSL_INCLUDE \
-					--library-path=$OPENSSL_LIBS/armeabi-v7a \
+					--library-path=$OPENSSL_LIBS/$ABI \
 					--config=Android
-        make clean ANDROID_ABI=armeabi-v7a
-		make -j${PARALLEL_MAKE} ANDROID_ABI=armeabi-v7a
-		
-		./configure $BUILD_OPTS \
-					--include-path=$OPENSSL_INCLUDE \
-					--library-path=$OPENSSL_LIBS/x86 \
-					--config=Android
-        make clean ANDROID_ABI=x86
-		make -j${PARALLEL_MAKE} ANDROID_ABI=x86
+        make clean ANDROID_ABI=$ABI
+		make -j${PARALLEL_MAKE} ANDROID_ABI=$ABI
 
-		echo `pwd`
-
-		rm -v lib/Android/armeabi-v7a/*d.a
-		rm -v lib/Android/x86/*d.a
+		rm -f lib/Android/$ABI/*d.a
 
 		export PATH=$OLD_PATH
 
-	elif [ "$TYPE" == "linux" ] || [ "$TYPE" == "linux64" ] || [ "$TYPE" == "linuxarmv6l" ] || [ "$TYPE" == "linuxarmv7l" ]; then
-		local BUILD_OPTS="--no-tests --no-samples --static --omit=CppUnit,CppUnit/WinTestRunner,Data/MySQL,Data/ODBC,PageCompiler,PageCompiler/File2Page,CppParser,PDF,PocoDoc,ProGen"
+	elif [ "$TYPE" == "linux" ] || [ "$TYPE" == "linux64" ] ; then
 		./configure $BUILD_OPTS
 		make -j${PARALLEL_MAKE}
 		# delete debug builds
-		rm lib/Linux/$(uname -m)/*d.a
+		rm -f lib/Linux/$(uname -m)/*d.a
+    elif [ "$TYPE" == "linuxarmv6l" ] || [ "$TYPE" == "linuxarmv7l" ]; then
+        if [ $CROSSCOMPILING -eq 1 ]; then
+            source ../../linuxarmv6_configure.sh
+            export CROSS_COMPILE=$TOOLCHAIN_ROOT/bin/$TOOLCHAIN_PREFIX-
+            export LIBRARY_PATH="$SYSROOT/usr/lib $SYSROOT/usr/lib/arm-linux-gnueabihf"
+        fi
+		./configure $BUILD_OPTS \
+		    --library-path="$LIBRARY_PATH" \
+		    --cflags="$CFLAGS" \
+		    --prefix=$BUILD_DIR/poco/install/$TYPE
+		make -j${PARALLEL_MAKE}
+		make install
+		# delete debug builds
+		rm -f install/$TYPE/lib/*d.a
 	else
 		echoWarning "TODO: build $TYPE lib"
 	fi
@@ -556,15 +473,15 @@ function copy() {
 	cp -Rv XML/include/Poco/* $1/include/Poco
 	cp -Rv Zip/include/Poco/Zip $1/include/Poco
 
+    rm -rf $1/lib/$TYPE
+    mkdir -p $1/lib/$TYPE
+    
 	# libs
 	if [ "$TYPE" == "osx" ] ; then
-		mkdir -p $1/lib/$TYPE
-		cp -v lib/Darwin/*.a $1/lib/$TYPE
+		cp -v install/$TYPE/lib/*.a $1/lib/$TYPE
 	elif [[ "$TYPE" == "ios" || "$TYPE" == "tvos" ]] ; then
-		mkdir -p $1/lib/$TYPE
 		cp -v lib/$TYPE/*.a $1/lib/$TYPE
 	elif [ "$TYPE" == "vs" ] ; then
-		mkdir -p $1/lib/$TYPE
 		if [ $ARCH == 32 ] ; then
 			mkdir -p $1/lib/$TYPE/Win32
 			cp -v lib/*.lib $1/lib/$TYPE/Win32
@@ -574,27 +491,20 @@ function copy() {
 		fi
 		
 	elif [ "$TYPE" == "msys2" ] ; then
-		mkdir -p $1/lib/$TYPE
 		cp -vf lib/MinGW/i686/*.a $1/lib/$TYPE
 		#cp -vf lib/MinGW/x86_64/*.a $1/lib/$TYPE
 	elif [ "$TYPE" == "linux" ] ; then
-		mkdir -p $1/lib/$TYPE
 		cp -v lib/Linux/$(uname -m)/*.a $1/lib/$TYPE
 	elif [ "$TYPE" == "linux64" ] ; then
-		mkdir -p $1/lib/$TYPE
 		cp -v lib/Linux/x86_64/*.a $1/lib/$TYPE
 	elif [ "$TYPE" == "linuxarmv6l" ] ; then
-		mkdir -p $1/lib/$TYPE
-		cp -v lib/Linux/armv6l/*.a $1/lib/$TYPE
+		cp -v install/$TYPE/lib/*.a $1/lib/$TYPE
 	elif [ "$TYPE" == "linuxarmv7l" ] ; then
-		mkdir -p $1/lib/$TYPE
-		cp -v lib/Linux/armv7l/*.a $1/lib/$TYPE
+		cp -v install/$TYPE/lib/*.a $1/lib/$TYPE
 	elif [ "$TYPE" == "android" ] ; then
-		mkdir -p $1/lib/$TYPE/armeabi-v7a
-		cp -v lib/Android/armeabi-v7a/*.a $1/lib/$TYPE/armeabi-v7a
-
-		mkdir -p $1/lib/$TYPE/x86
-		cp -v lib/Android/x86/*.a $1/lib/$TYPE/x86
+		rm -rf $1/lib/$TYPE/$ABI
+		mkdir -p $1/lib/$TYPE/$ABI
+		cp -v lib/Android/$ABI/*.a $1/lib/$TYPE/$ABI
 	else
 		echoWarning "TODO: copy $TYPE lib"
 	fi
