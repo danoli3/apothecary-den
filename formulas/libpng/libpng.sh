@@ -11,6 +11,8 @@ VER=1.6.2
 GIT_URL=http://git.code.sf.net/p/libpng/code
 GIT_TAG=v$VER
 
+FORMULA_TYPES=( "osx" "vs" )
+
 # download the source code and unpack it into LIB_NAME
 function download() {
 	curl -LO https://downloads.sourceforge.net/project/libpng/libpng$MAJOR_VER/$VER/libpng-$VER.tar.gz

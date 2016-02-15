@@ -6,7 +6,7 @@
 #
 # uses a CMake build system
 
-FORMULA_TYPES=( "osx" "linux" "linux64" "vs" "msys2" "ios" "android" )
+FORMULA_TYPES=( "osx" "linux" "linux64" "linuxarmv7l" "vs" "msys2" )
 
 # define the version
 VER=3.0.4
@@ -102,20 +102,20 @@ function copy() {
 	elif [ "$TYPE" == "osx" ]; then
 		# Standard *nix style copy.
 		# copy headers
-		if [ -d $BUILD_ROOT_DIR/include/GLFW/ ] ; then
-			cp -Rv $BUILD_ROOT_DIR/include/GLFW/* $1/include/GLFW/
+		if [ -d include/GLFW/ ] ; then
+			cp -Rv include/GLFW/* $1/include/GLFW/
 		fi
 		# copy lib
-		if [ -d $BUILD_ROOT_DIR/lib/ ] ; then
-			cp -Rv $BUILD_ROOT_DIR/lib/libglfw3.a $1/lib/$TYPE/glfw3.a
+		if [ -d lib/ ] ; then
+			cp -Rv lib/libglfw3.a $1/lib/$TYPE/glfw3.a
 		fi
 		
 	else
 		# Standard *nix style copy.
 		# copy headers
-		cp -Rv $BUILD_ROOT_DIR/include/GLFW/* $1/include/GLFW/
+		cp -Rv include/GLFW/* $1/include/GLFW/
 		# copy lib
-		cp -Rv $BUILD_ROOT_DIR/lib/libglfw3.a $1/lib/$TYPE/libglfw3.a
+		cp -Rv src/libglfw3.a $1/lib/$TYPE/libglfw3.a
 	fi
 
 	# copy license file

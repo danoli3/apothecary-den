@@ -6,7 +6,7 @@
 #
 # uses an autotools build system
 
-FORMULA_TYPES=( "osx" "linux" "linux64" "vs" "msys2" )
+FORMULA_TYPES=( "osx" "vs" "msys2" )
 
 #FORMULA_DEPENDS=( "pkg-config" )
 
