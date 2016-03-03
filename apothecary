@@ -313,7 +313,8 @@ function installAndroidToolchain() {
 	local WD=$(pwd)
 
 	if [ ! -d $ANDROID_NDK_ROOT/build/tools ]; then
-		echoError "ANDROID_NDK_ROOT not defined, please configure ../../libs/openFrameworksCompiled/project/android/paths.make"
+		echoError "ANDROID_NDK_ROOT not defined, please configure paths.make in this folder or ../projects/android/paths.make"
+		exit 1
 	fi
 
 
@@ -332,23 +333,28 @@ function installAndroidToolchain() {
 	    exit 1
 	fi
 
-	if [ ! -d "$BUILD_DIR/Toolchains/Android/arm" ]; then
-		./make-standalone-toolchain.sh \
-			--ndk-dir=$ANDROID_NDK_ROOT \
-			--platform=$ANDROID_PLATFORM \
-			--install-dir=$BUILD_DIR/Toolchains/Android/arm \
-			--arch=arm \
-			--system=${ANDROID_HOST}
-	fi
-
-
-	if [ ! -d "$BUILD_DIR/Toolchains/Android/x86" ]; then
-		./make-standalone-toolchain.sh \
-			--ndk-dir=$ANDROID_NDK_ROOT \
-			--platform=$ANDROID_PLATFORM \
-			--install-dir=$BUILD_DIR/Toolchains/Android/x86 \
-			--arch=x86  \
-			--system=${ANDROID_HOST}
+    if [ "$ARCH" == "armv7" ]; then
+	    if [ ! -d "$BUILD_DIR/Toolchains/Android/arm" ]; then
+		    ./make-standalone-toolchain.sh \
+			    --ndk-dir=$ANDROID_NDK_ROOT \
+			    --platform=$ANDROID_PLATFORM \
+			    --install-dir=$BUILD_DIR/Toolchains/Android/$ARCH \
+			    --arch=arm \
+			    --system=${ANDROID_HOST} \
+			    --toolchain=arm-linux-androideabi-clang3.6 \
+			    --stl=libc++
+	    fi
+	elif [ "$ARCH" == "x86" ]; then
+	    if [ ! -d "$BUILD_DIR/Toolchains/Android/x86" ]; then
+		    ./make-standalone-toolchain.sh \
+			    --ndk-dir=$ANDROID_NDK_ROOT \
+			    --platform=$ANDROID_PLATFORM \
+			    --install-dir=$BUILD_DIR/Toolchains/Android/$ARCH \
+			    --arch=x86  \
+			    --system=${ANDROID_HOST} \
+			    --toolchain=x86-clang3.6 \
+			    --stl=libc++
+	    fi
 	fi
 
 	cd $WD
@@ -925,8 +931,6 @@ function  dump_output() {
 	fi
 }
 function  error_handler() {
-
-
 	echo ERROR: An error was encountered with the build.
 	dump_output
 	# nicely terminate the ping output loop
@@ -936,9 +940,21 @@ function  error_handler() {
 		kill $PING_LOOP_PID || true
 	fi
 
-	JOB="$0"              # job name
-    LASTLINE="$1"         # line of error occurrence
-    LASTERR="$2"          # error code
+    if [ $# -gt 0 ]; then
+	    JOB="$0"              # job name
+	else
+	    JOB=""
+	fi
+	if [ $# -gt 1 ]; then
+        LASTLINE="$1"         # line of error occurrence
+    else
+        LASTLINE=""
+    fi
+    if [ $# -gt 2 ]; then
+        LASTERR="$2"          # error code
+    else
+        LASTERR="1"
+    fi
     echo "ERROR in ${JOB} : line ${LASTLINE} with exit code ${LASTERR}"
 
 	exit "${LASTERR}"
@@ -985,7 +1001,7 @@ fi
 echoVerbose "Build type: $TYPE"
 
 # check if we have a valid arch
-if [ $ARCH != 32 -a $ARCH != 64 ] ; then
+if [ $ARCH != 32 -a $ARCH != 64 -a $ARCH != armv7 -a $ARCH != x86 ] ; then
 	echoError " Invalid architecture: $ARCH"
 	exit 1
 fi
@@ -1025,17 +1041,45 @@ BUILD_ROOT_DIR=$BUILD_DIR/$BUILDROOT_SUBDIR
 
 # set for android sdk info
 if [[ "$TYPE" == "android" ]] ; then
-	if [[ -e ${LIBS_DIR}/openFrameworksCompiled/project/android/paths.make ]] ; then
-		source $LIBS_DIR/openFrameworksCompiled/project/android/paths.make
+	if [[ -e ${APOTHECARY_DIR}/paths.make ]] ; then
+		source ${APOTHECARY_DIR}/paths.make
+		ANDROID_NDK_ROOT=${NDK_ROOT}
+		echoVerbose "Android NDK root: $ANDROID_NDK_ROOT"
+	elif [[ -e ${REL_OF_ROOT}/projects/android/paths.make ]] ; then
+		source $REL_OF_ROOT/projects/android/paths.make
 		ANDROID_NDK_ROOT=${NDK_ROOT}
 		echoVerbose "Android NDK root: $ANDROID_NDK_ROOT"
 	else
 		echoError "Targeting android, but can't find the SDK. Missing"
-		echoError "libs/openFrameworksCompiled/project/android/paths.make ..."
-		echoError "See the following for info:"
-		echoError "libs/openFrameworksCompiled/project/android/paths.make.default"
+		echoError "paths.make in apothecary folder or"
+		echoError "projects/android/paths.make in OF folder"
 		exit 1
 	fi
+	if [ "$ARCH" == "armv7" ]; then
+	    ABI=armeabi-v7a
+	elif [ "$ARCH" == "x86" ]; then
+	    ABI=x86
+	fi
+fi
+
+CROSSCOMPILING=0
+if [ "$TYPE" == "linuxarmv6l" ] || [ "$TYPE" == "linuxarmv7l" ]; then
+    if [ "$(uname -m)" != "armv6" -a "$(uname -m)" != "armv7" ]; then
+        CROSSCOMPILING=1
+        if [ -z $TOOLCHAIN_PREFIX ]; then
+            export TOOLCHAIN_PREFIX=arm-linux-gnueabihf
+        fi
+        if [ -z $SYSROOT ]; then
+            echoError Trying to cross compile but SYSROOT environment variable is not set
+            echoError Should be set to root of target OS image
+            exit 1
+        fi
+        if [ -z $TOOLCHAIN_ROOT ]; then
+            echoWarning Trying to cross compile but TOOLCHAIN_ROOT not set
+            echoWarning Trying to continue in case PATH is set to correct toolchain
+            echoWarning If compiling fails try setting TOOLCHAIN_ROOT to root of cross compiler toolchain
+        fi
+    fi
 fi
 
 # handle commands
